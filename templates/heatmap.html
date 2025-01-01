@@ -4,22 +4,10 @@
     <title>Cancer Heatmap</title>
 </head>
 <body>
-    <h1>Cancer Data Viewer</h1>
+    <h1>Cancer Data</h1>
     
-    <!-- Form for user input -->
-    <form method="POST">
-        <label for="cancer_type">Cancer Type:</label>
-        <select id="cancer_type" name="cancer_type" required>
-            {% for cancer in cancer_types %}
-                <option value="{{ cancer }}" {% if cancer == cancer_type %}selected{% endif %}>{{ cancer }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="year">Year:</label>
-        <input type="number" id="year" name="year" required value="{{ year if year else '' }}">
-
-        <button type="submit">Submit</button>
-    </form>
+    <!-- Include the form -->
+    {% include "form.html" %}
 
     <!-- Display results if data is available -->
     {% if data %}
