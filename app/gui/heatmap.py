@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from ..db.db_connector import get_db_connection
 from ..db.queries import *
 import os
+import plotly.graph_objects as go
+import pandas as pd
 
 # Define absolute paths for templates and static folders
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -10,8 +12,6 @@ static_dir = os.path.join(base_dir, '../../static')
 
 # Initialize Flask app with absolute paths for templates and static files
 app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
-
-from decimal import Decimal
 
 def calculate_rates(data, filters):
     """
@@ -26,17 +26,6 @@ def calculate_rates(data, filters):
     """
     rates = []
     min_rate, max_rate = float('inf'), float('-inf')
-
-    # Define color categories (all shades of red with white for zero counts)
-    color_bins = [
-        (0.0, 0.0, "#ffffff"),  # White for zero counts
-        (0.0, 0.2, "#ffcccc"),  # Very Light Red (Very Low)
-        (0.2, 0.4, "#ff9999"),  # Light Red (Low)
-        (0.4, 0.6, "#ff6666"),  # Moderate Red (Moderate)
-        (0.6, 0.8, "#ff3333"),  # Dark Red (High)
-        (0.8, 1.0, "#cc0000"),  # Very Dark Red (Very High)
-    ]
-
 
     for row in data:
         # Convert populations to floats for safe division
@@ -88,9 +77,7 @@ def calculate_rates(data, filters):
     # Round min_rate and max_rate to 2 decimal places for consistency
     min_rate = round(min_rate, 2)
     max_rate = round(max_rate, 2)
-    
-    # After calculating rates
-    print(f"DEBUG: Min Rate: {min_rate}, Max Rate: {max_rate}")
+
 
     # Normalize rates (0–1) and assign colors
     for row in rates:
@@ -99,14 +86,6 @@ def calculate_rates(data, filters):
             (row['rate'] - min_rate) / (max_rate - min_rate), 2)
         else:
             row['normalized_rate'] = 0
-
-        # Assign color based on normalized rate
-        for lower, upper, color in color_bins:
-            if lower <= row['normalized_rate'] <= upper:
-                row['color'] = color
-                break
-        else:
-            row['color'] = "#000000"  # Default to black for unexpected values
 
     return rates
 
@@ -120,6 +99,7 @@ def heatmap():
     is_female = None
     is_alive = None
     race_id = None
+    heatmap_html = None
 
     # Fetch options for dropdowns
     conn, cursor = get_db_connection()
@@ -155,6 +135,47 @@ def heatmap():
         }
         data = calculate_rates(data, filters)
 
+       # Prepare data for the heatmap
+        df = pd.DataFrame(data)
+
+        # Add a hover text column for custom display
+        df['hover_text'] = df.apply(
+            lambda row: f"{row['name']}<br>Rate: {row['rate']}%", axis=1
+        )
+
+        # Create the Choropleth map
+        fig = go.Figure()
+
+        # Add Choropleth layer
+        fig.add_trace(go.Choropleth(
+            locations=df['abbreviation'],  # Use state abbreviations for mapping
+            z=df['normalized_rate'],  # Normalized rates for coloring
+            locationmode='USA-states',  # Match state abbreviations to US states
+            colorscale="Reds",  # Use a predefined colorscale
+            showscale=True,  # Display the color bar
+            colorbar=dict(title="Normalized Rate"),  # Title for the color bar
+            text=df['hover_text'],  # Custom hover text
+            hoverinfo='text',  # Display only the custom hover text
+        ))
+
+        # Update layout
+        fig.update_layout(
+            geo=dict(
+                scope='usa',  # Focus on US
+                showlakes=True,  # Show lakes
+                lakecolor='rgb(255, 255, 255)',  # Color for lakes
+            ),
+            title_text='US Heatmap by State (Normalized Rates)',
+            width=1200,  # Increase map width
+            height=800,  # Increase map height
+        )
+
+        # Convert Plotly figure to HTML
+        heatmap_html = fig.to_html(full_html=False)
+
+
+
+
     # Options for dropdowns
     is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
     is_alive_options = [{'value': '1', 'label': 'Incidence'}, {'value': '0', 'label': 'Mortality'}]    
@@ -172,7 +193,8 @@ def heatmap():
         race_id=race_id,
         races=races,
         is_female_options=is_female_options,
-        is_alive_options=is_alive_options
+        is_alive_options=is_alive_options,
+        heatmap_html=heatmap_html
     )
 
 

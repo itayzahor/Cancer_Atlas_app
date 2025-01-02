@@ -9,41 +9,32 @@
     <!-- Include the form -->
     {% include "form.html" %}
 
+    {% if heatmap_html %}
+        <div>
+            {{ heatmap_html|safe }}
+        </div>
+    {% endif %}
+
     <!-- Display results if data is available -->
     {% if data %}
         <h2>Results for {{ cancer_type }} in {{ year }}</h2>
         <table border="1">
             <thead>
                 <tr>
-                    <th>State ID</th>
-                    <th>Total Count</th>
+                    <th>State Name</th>
+                    <th>Cancer Cases</th>
                     <th>Total Population</th>
-                    <th>Male Population</th>
-                    <th>Female Population</th>
-                    <th>White Population</th>
-                    <th>Black Population</th>
-                    <th>Asian Population</th>
-                    <th>Hispanic Population</th>
-                    <th>Native Pacific Population</th>
                     <th>Filtered Population</th>
                     <th>Rate %</th>
                     <th>Normalized Rate</th>
-                    <th>Color</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in data %}
                 <tr>
-                    <td>{{ row['state_id'] }}</td>
+                    <td>{{ row['name'] }}</td>
                     <td>{{ row['total_count'] }}</td>
                     <td>{{ row['total_population'] }}</td>
-                    <td>{{ row['male_population'] }}</td>
-                    <td>{{ row['female_population'] }}</td>
-                    <td>{{ row['white_population'] }}</td>
-                    <td>{{ row['black_population'] }}</td>
-                    <td>{{ row['asian_population'] }}</td>
-                    <td>{{ row['hispanic_population'] }}</td>
-                    <td>{{ row['native_pacific_population'] }}</td>
                     <td>
                         {% if row['filtered_population'] %}
                             {{ row['filtered_population'] }}
@@ -58,18 +49,9 @@
                             N/A
                         {% endif %}
                     </td>
-                    
                     <td>
                         {% if row['normalized_rate'] is not none %}
                             {{ row['normalized_rate'] }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    
-                    <td>
-                        {% if row['color'] %}
-                            <div style="width: 20px; height: 20px; background-color: {{ row['color'] }};"></div>
                         {% else %}
                             N/A
                         {% endif %}

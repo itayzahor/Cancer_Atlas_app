@@ -16,7 +16,7 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id):
     query = """
         SELECT 
             d.state_id,
-            COALESCE(SUM(c.count), 0) AS total_count,
+            COALESCE(cd.total_count, 0) AS total_count,
             d.total_population,
             d.male_population,
             d.female_population,
@@ -24,51 +24,49 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id):
             d.black_population,
             d.asian_population,
             d.hispanic_population,
-            d.native_pacific_population
+            d.native_pacific_population,
+            s.abbreviation,
+            s.latitude,
+            s.longitude,
+            s.name
         FROM demographics d
-        LEFT JOIN cancer_data c ON d.state_id = c.state_id
+        LEFT JOIN (
+            SELECT 
+                state_id,
+                SUM(count) AS total_count
+            FROM cancer_data
+            WHERE 1=1
     """
-    
-    on_clauses = []
+
     params = []
 
-    # Add filters to the LEFT JOIN ON clause
+    # Add filters for cancer_data subquery
     if cancer_type != "-":
-        on_clauses.append("c.site_id = %s")
+        query += " AND site_id = %s"
         params.append(int(cancer_type))
     if year != "-":
-        on_clauses.append("c.year = %s")
+        query += " AND year = %s"
         params.append(int(year))
     if is_female != "-":
-        on_clauses.append("c.is_female = %s")
+        query += " AND is_female = %s"
         params.append(int(is_female))
     if is_alive != "-":
-        on_clauses.append("c.is_alive = %s")
+        query += " AND is_alive = %s"
         params.append(int(is_alive))
     if race_id != "-":
-        on_clauses.append("c.race_id = %s")
+        query += " AND race_id = %s"
         params.append(int(race_id))
 
-    # Add ON clause filters
-    if on_clauses:
-        query += " AND " + " AND ".join(on_clauses)
-
     query += """
-    GROUP BY 
-        d.state_id, 
-        d.total_population, 
-        d.male_population, 
-        d.female_population, 
-        d.white_population, 
-        d.black_population, 
-        d.asian_population, 
-        d.hispanic_population, 
-        d.native_pacific_population
+            GROUP BY state_id
+        ) cd ON d.state_id = cd.state_id
+        LEFT JOIN states s ON d.state_id = s.id
     """
 
     # Execute the query
     cursor.execute(query, params)
     return cursor.fetchall()
+
 
 
 
