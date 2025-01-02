@@ -17,6 +17,18 @@
                 <tr>
                     <th>State ID</th>
                     <th>Total Count</th>
+                    <th>Total Population</th>
+                    <th>Male Population</th>
+                    <th>Female Population</th>
+                    <th>White Population</th>
+                    <th>Black Population</th>
+                    <th>Asian Population</th>
+                    <th>Hispanic Population</th>
+                    <th>Native Pacific Population</th>
+                    <th>Filtered Population</th>
+                    <th>Rate %</th>
+                    <th>Normalized Rate</th>
+                    <th>Color</th>
                 </tr>
             </thead>
             <tbody>
@@ -24,10 +36,50 @@
                 <tr>
                     <td>{{ row['state_id'] }}</td>
                     <td>{{ row['total_count'] }}</td>
+                    <td>{{ row['total_population'] }}</td>
+                    <td>{{ row['male_population'] }}</td>
+                    <td>{{ row['female_population'] }}</td>
+                    <td>{{ row['white_population'] }}</td>
+                    <td>{{ row['black_population'] }}</td>
+                    <td>{{ row['asian_population'] }}</td>
+                    <td>{{ row['hispanic_population'] }}</td>
+                    <td>{{ row['native_pacific_population'] }}</td>
+                    <td>
+                        {% if row['filtered_population'] %}
+                            {{ row['filtered_population'] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row['rate'] is not none %}
+                            {{ row['rate'] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {% if row['normalized_rate'] is not none %}
+                            {{ row['normalized_rate'] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {% if row['color'] %}
+                            <div style="width: 20px; height: 20px; background-color: {{ row['color'] }};"></div>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    {% else %}
+        <p>No data available for the selected filters.</p>
     {% endif %}
 </body>
 </html>
