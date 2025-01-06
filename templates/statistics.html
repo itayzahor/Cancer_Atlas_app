@@ -1,0 +1,11 @@
+{% if stats %}
+<div style="border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+    <h3>Statistics</h3>
+    <ul>
+        <li><strong>Total Cancer Cases:</strong> {{ stats.total_cases }}</li>
+        <li><strong>Average Rate (%):</strong> {{ stats.avg_rate }}</li>
+        <li><strong>State with Highest Rate:</strong> {{ stats.highest_rate.state }} ({{ stats.highest_rate.rate }}%)</li>
+        <li><strong>State with Lowest Rate:</strong> {{ stats.lowest_rate.state }} ({{ stats.lowest_rate.rate }}%)</li>
+    </ul>
+</div>
+{% endif %}

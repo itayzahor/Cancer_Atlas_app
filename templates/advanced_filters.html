@@ -1,0 +1,17 @@
+<div id="advanced-filters" style="display: none; margin-top: 10px;">
+    <h3>Advanced Filters</h3>
+
+    <!-- Unemployment Rate Filter -->
+    <label for="unemployement_min">Min Unemployment Rate (%):</label>
+    <input type="number" step="0.1" name="unemployement_min" value="{{ unemployement_min or '' }}">
+
+    <label for="unemployement_max">Max Unemployment Rate (%):</label>
+    <input type="number" step="0.1" name="unemployement_max" value="{{ unemployement_max or '' }}">
+
+    <!-- Median Income Filter -->
+    <label for="median_min">Min Median Income ($):</label>
+    <input type="number" step="100" name="median_min" value="{{ median_min or '' }}">
+
+    <label for="median_max">Max Median Income ($):</label>
+    <input type="number" step="100" name="median_max" value="{{ median_max or '' }}">
+</div>
