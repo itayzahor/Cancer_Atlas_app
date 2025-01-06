@@ -4,16 +4,21 @@
     <title>Cancer Heatmap</title>
 </head>
 <body>
-    <h1>Cancer Data</h1>
+    <h1>Cancer Atlas</h1>
     
     <!-- Include the form -->
     {% include "form.html" %}
+    
 
     {% if heatmap_html %}
         <div>
             {{ heatmap_html|safe }}
         </div>
+
+        {% include "statistics.html" %}
     {% endif %}
+
+    
 
     <!-- Display results if data is available -->
     {% if data %}

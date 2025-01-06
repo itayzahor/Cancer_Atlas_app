@@ -93,12 +93,10 @@ def calculate_rates(data, filters):
 
 @app.route('/heatmap', methods=['GET', 'POST'])
 def heatmap():
-    data = None
-    cancer_type = None
-    year = None
-    is_female = None
-    is_alive = None
-    race_id = None
+    show_advanced = 'false'
+
+    data = []
+    stats = {}
     heatmap_html = None
 
     # Fetch options for dropdowns
@@ -109,24 +107,54 @@ def heatmap():
     cursor.close()
     conn.close()
 
-    if request.method == 'POST':
-        # Get user inputs from the form
-        cancer_type = request.form.get('cancer_type', "-")
-        year = request.form.get('year', "-")
-        is_female = request.form.get('is_female', "-")
-        is_alive = request.form.get('is_alive', "-")
-        race_id = request.form.get('race_id', "-")
+    # Default filter values (for "no filter" case)
+    cancer_type = "-"
+    year = "-"
+    is_female = "-"
+    is_alive = "-"
+    race_id = "-"
+    unemployement_min = None
+    unemployement_max = None
+    median_min = None
+    median_max = None
 
-        # Convert to integers if not "All" (`"-"`)
-        cancer_type = int(cancer_type) if cancer_type != "-" else "-"
-        race_id = int(race_id) if race_id != "-" else "-"
-        year = int(year) if year != "-" else "-"
+    # Handle GET and POST requests the same way
+    if request.method in ['GET', 'POST']:
+        if request.method == 'POST':
+            # Get visibility state for advanced filters
+            show_advanced = request.form.get('show_advanced', 'false')
+
+            # Get user inputs from the form
+            cancer_type = request.form.get('cancer_type', "-")
+            year = request.form.get('year', "-")
+            is_female = request.form.get('is_female', "-")
+            is_alive = request.form.get('is_alive', "-")
+            race_id = request.form.get('race_id', "-")
+            unemployement_min = request.form.get('unemployement_min', None)
+            unemployement_max = request.form.get('unemployement_max', None)
+            median_min = request.form.get('median_min', None)
+            median_max = request.form.get('median_max', None)
+
+            # Convert form inputs to proper data types
+            unemployement_min = float(unemployement_min) if unemployement_min else None
+            unemployement_max = float(unemployement_max) if unemployement_max else None
+            median_min = int(median_min) if median_min else None
+            median_max = int(median_max) if median_max else None
+
+            # Convert to integers if not "All" (`"-"`)
+            cancer_type = int(cancer_type) if cancer_type != "-" else "-"
+            race_id = int(race_id) if race_id != "-" else "-"
+            year = int(year) if year != "-" else "-"
 
         # Fetch data from the database
         conn, cursor = get_db_connection()
-        data = fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id)
+        data = fetch_heatmap_data(
+            cursor, cancer_type, year, is_female, is_alive, race_id,
+            unemployement_min, unemployement_max, median_min, median_max
+        )
         cursor.close()
         conn.close()
+
 
         # Apply rate calculations
         filters = {
@@ -134,6 +162,27 @@ def heatmap():
             "race_id": race_id,
         }
         data = calculate_rates(data, filters)
+
+        # Calculate statistics
+        total_cases = sum(row['total_count'] for row in data if row['total_count'])
+        total_rates = sum(row['rate'] for row in data if row['rate'])
+        avg_rate = round(total_rates / len(data), 2) if data else 0
+
+        highest_rate = max(data, key=lambda row: row['rate'])
+        lowest_rate = min(data, key=lambda row: row['rate'])
+
+        stats = {
+            'total_cases': total_cases,
+            'avg_rate': avg_rate,
+            'highest_rate': {
+                'state': highest_rate['name'],
+                'rate': highest_rate['rate']
+            },
+            'lowest_rate': {
+                'state': lowest_rate['name'],
+                'rate': lowest_rate['rate']
+            }
+        }
 
        # Prepare data for the heatmap
         df = pd.DataFrame(data)
@@ -162,12 +211,10 @@ def heatmap():
         fig.update_layout(
             geo=dict(
                 scope='usa',  # Focus on US
-                showlakes=True,  # Show lakes
-                lakecolor='rgb(255, 255, 255)',  # Color for lakes
             ),
             title_text='US Heatmap by State (Normalized Rates)',
             width=1200,  # Increase map width
-            height=800,  # Increase map height
+            height=600,  # Increase map height
         )
 
         # Convert Plotly figure to HTML
@@ -194,6 +241,12 @@ def heatmap():
         races=races,
         is_female_options=is_female_options,
         is_alive_options=is_alive_options,
+        unemployement_min=unemployement_min,
+        unemployement_max=unemployement_max,
+        median_min=median_min,
+        median_max=median_max,
+        show_advanced=show_advanced,
+        stats=stats,
         heatmap_html=heatmap_html
     )
 
