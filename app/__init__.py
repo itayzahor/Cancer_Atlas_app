@@ -1,5 +1,12 @@
-# app/__init__.py
+from flask import Flask
+from app.gui.heatmap import heatmap_bp
+from app.gui.insights import insights_bp
 
-# This makes the `db_connector` and `queries` available for easy imports.
-from app.db.db_connector import get_db_connection
-from app.db.queries import fetch_heatmap_data
+def create_app():
+    app = Flask(__name__)
+
+    # Register Blueprints
+    app.register_blueprint(heatmap_bp)
+    app.register_blueprint(insights_bp)
+
+    return app

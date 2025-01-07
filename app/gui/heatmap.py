@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Blueprint, render_template, request
 from ..db.db_connector import get_db_connection
 from ..db.queries import *
 import os
@@ -10,8 +10,8 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 templates_dir = os.path.join(base_dir, '../../templates')
 static_dir = os.path.join(base_dir, '../../static')
 
-# Initialize Flask app with absolute paths for templates and static files
-app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
+heatmap_bp = Blueprint('heatmap', __name__, template_folder='../../templates', static_folder='../../static')
+
 
 def calculate_rates(data, filters):
     """
@@ -91,7 +91,7 @@ def calculate_rates(data, filters):
 
 
 
-@app.route('/heatmap', methods=['GET', 'POST'])
+@heatmap_bp.route('/heatmap', methods=['GET', 'POST'])
 def heatmap():
     show_advanced = 'false'
 
@@ -250,7 +250,3 @@ def heatmap():
         heatmap_html=heatmap_html
     )
 
-
-
-if __name__ == "__main__":
-    app.run(debug=True)

@@ -2,9 +2,17 @@
 <html>
 <head>
     <title>Cancer Heatmap</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='insights.css') }}">
 </head>
 <body>
     <h1>Cancer Atlas</h1>
+
+    <!-- Insights Button -->
+    <div>
+        <a href="/insights" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+            Insights & Correlations
+        </a>
+    </div>
     
     <!-- Include the form -->
     {% include "form.html" %}
@@ -17,6 +25,8 @@
 
         {% include "statistics.html" %}
     {% endif %}
+
+    
 
     
 

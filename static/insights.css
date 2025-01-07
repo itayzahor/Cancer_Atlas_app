@@ -1,0 +1,53 @@
+/* static/insights.css */
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 20px;
+}
+
+.text-section {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.plot-section {
+    flex: 1; /* Take up equal space */
+    max-width: 50%; /* Ensure the plot doesn't become too large */
+}
+
+
+h1, h2, h3 {
+    text-align: center;
+}
+
+table {
+    margin: 20px auto;
+    border-collapse: collapse;
+    width: 80%;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+}
+
+.back-button {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    text-align: center;
+}
