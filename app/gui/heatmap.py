@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Blueprint, render_template, request
 from ..db.db_connector import get_db_connection
 from ..db.queries import *
 import os
@@ -10,8 +10,8 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 templates_dir = os.path.join(base_dir, '../../templates')
 static_dir = os.path.join(base_dir, '../../static')
 
-# Initialize Flask app with absolute paths for templates and static files
-app = Flask(__name__, template_folder=templates_dir, static_folder=static_dir)
+heatmap_bp = Blueprint('heatmap', __name__, template_folder='../../templates', static_folder='../../static')
+
 
 def calculate_rates(data, filters):
     """
@@ -91,7 +91,7 @@ def calculate_rates(data, filters):
 
 
 
-@app.route('/heatmap', methods=['GET', 'POST'])
+@heatmap_bp.route('/heatmap', methods=['GET', 'POST'])
 def heatmap():
     show_advanced = 'false'
 
@@ -117,6 +117,12 @@ def heatmap():
     unemployement_max = None
     median_min = None
     median_max = None
+    insurance_min = None
+    insurance_max = None
+    inactivity_min = None
+    inactivity_max = None
+    cigarette_min = None
+    cigarette_max = None
 
     # Handle GET and POST requests the same way
     if request.method in ['GET', 'POST']:
@@ -130,16 +136,28 @@ def heatmap():
             is_female = request.form.get('is_female', "-")
             is_alive = request.form.get('is_alive', "-")
             race_id = request.form.get('race_id', "-")
-            unemployement_min = request.form.get('unemployement_min', None)
-            unemployement_max = request.form.get('unemployement_max', None)
-            median_min = request.form.get('median_min', None)
-            median_max = request.form.get('median_max', None)
+            unemployement_min = request.form.get('unemployement_min')
+            unemployement_max = request.form.get('unemployement_max')
+            median_min = request.form.get('median_min')
+            median_max = request.form.get('median_max')
+            insurance_min = request.form.get('insurance_min')
+            insurance_max = request.form.get('insurance_max')
+            inactivity_min = request.form.get('inactivity_min')
+            inactivity_max = request.form.get('inactivity_max')
+            cigarette_min = request.form.get('cigarette_min')
+            cigarette_max = request.form.get('cigarette_max')
 
             # Convert form inputs to proper data types
             unemployement_min = float(unemployement_min) if unemployement_min else None
             unemployement_max = float(unemployement_max) if unemployement_max else None
             median_min = int(median_min) if median_min else None
             median_max = int(median_max) if median_max else None
+            insurance_min = float(insurance_min) if insurance_min else None
+            insurance_max = float(insurance_max) if insurance_max else None
+            inactivity_min = float(inactivity_min) if inactivity_min else None
+            inactivity_max = float(inactivity_max) if inactivity_max else None
+            cigarette_min = float(cigarette_min) if cigarette_min else None
+            cigarette_max = float(cigarette_max) if cigarette_max else None
 
             # Convert to integers if not "All" (`"-"`)
             cancer_type = int(cancer_type) if cancer_type != "-" else "-"
@@ -150,7 +168,7 @@ def heatmap():
         conn, cursor = get_db_connection()
         data = fetch_heatmap_data(
             cursor, cancer_type, year, is_female, is_alive, race_id,
-            unemployement_min, unemployement_max, median_min, median_max
+            unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max
         )
         cursor.close()
         conn.close()
@@ -221,8 +239,6 @@ def heatmap():
         heatmap_html = fig.to_html(full_html=False)
 
 
-
-
     # Options for dropdowns
     is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
     is_alive_options = [{'value': '1', 'label': 'Incidence'}, {'value': '0', 'label': 'Mortality'}]    
@@ -245,12 +261,14 @@ def heatmap():
         unemployement_max=unemployement_max,
         median_min=median_min,
         median_max=median_max,
+        insurance_min=insurance_min,
+        insurance_max=insurance_max,
+        inactivity_min=inactivity_min,
+        inactivity_max=inactivity_max,
+        cigarette_min=cigarette_min,
+        cigarette_max=cigarette_max,
         show_advanced=show_advanced,
         stats=stats,
         heatmap_html=heatmap_html
     )
 
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
