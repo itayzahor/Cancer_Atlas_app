@@ -1,5 +1,3 @@
-# connector to the mysql
-
 pip install mysql-connector-python
 
 pip install mysql-connector-python flask
@@ -9,6 +7,3 @@ pip install plotly
 pip install pandas
 
 pip install flask-session
-
-pip install -r requirements.txt
-
