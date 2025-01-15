@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 from ..db.db_connector import get_db_connection
 from ..db.insights_queries import *
 from ..db.queries import *
@@ -6,10 +6,10 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # Define the Blueprint
-insights_bp = Blueprint('insights', __name__, template_folder='../../templates')
+socioeconomic_analysis_bp = Blueprint('socioeconomic_analysis', __name__, template_folder='../../templates')
 
-@insights_bp.route('/socioeconomic_analysis', methods=['GET', 'POST'])
-def insights():
+@socioeconomic_analysis_bp.route('/', methods=['GET', 'POST'])
+def socioeconomic_analysis():
 
     # Get database connection and cursor
     conn, cursor = get_db_connection()
@@ -27,6 +27,9 @@ def insights():
         query = socioeconomic_vs_mortality(cancer_type, factor)
         cursor.execute(query)
         data = cursor.fetchall()
+    except Exception as e:
+        print(f"Database query failed: {e}")
+        data = []  # Fallback to empty data
     finally:
         cursor.close()
         conn.close()
@@ -51,6 +54,9 @@ def insights():
         height=600,
         width=800,
     )
+
+    # Store the data directly in the session
+    session['socioeconomic_data'] = data
 
     # Render the Insights page with the chart and data
     return render_template(

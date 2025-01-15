@@ -8,6 +8,9 @@
 <body>
     <h1>Socioeconomic Analysis</h1>
 
+    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+
+
     <!-- Form Section -->
     <form method="GET" action="/socioeconomic_analysis" class="form-section">
         <label for="cancer_type">Select Cancer Type:</label>
@@ -62,81 +65,9 @@
         </div>
     </div>
 
-    <!-- Data Table Section -->
-    <h2>Data Table</h2>
-    <table border="1" class="data-table">
-        <thead>
-            <tr>
-                <th>State</th>
-                <th>Median Income ($)</th>
-                <th>Mortality Rate (per 1,000)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in data %}
-            <tr>
-                <td>{{ row['state'] }}</td>
-                <td>{{ row['socioeconomic_factor'] }}</td>
-                <td>{{ row['mortality_rate'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            line-height: 1.6;
-        }
-
-        h1, h2 {
-            text-align: center;
-        }
-
-        .form-section {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .btn-submit {
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .btn-submit:hover {
-            background-color: #0056b3;
-        }
-
-        .content {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-
-        .plot-section, .text-section {
-            width: 45%;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .data-table th, .data-table td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-        }
-
-        .data-table th {
-            background-color: #f4f4f4;
-        }
-    </style>
+    <a href="{{ url_for('utilities.download_csv', data_key='socioeconomic_data') }}" class="btn-download-csv">
+        Download Socioeconomic Data
+    </a>
+    
 </body>
 </html>

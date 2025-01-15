@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environmental Data vs Cancer Incidence</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='shared.css') }}">
+</head>
+<body>
+    <h1>Environmental Data vs Cancer Incidence</h1>
+
+    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+
+
+    <!-- Form Section -->
+    <form method="GET" action="/environmental_analysis" class="form-section">
+        <label for="cancer_type">Select Cancer Type:</label>
+        <select id="cancer_type" name="cancer_type">
+            <option value="-" {% if selected_cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+            {% for site in cancer_types %}
+            <option value="{{ site['id'] }}" {% if site['id']|int == selected_cancer_type|int %}selected{% endif %}>
+                {{ site['name'] }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label for="factor">Select Environmental Factor:</label>
+        <select id="factor" name="factor">
+            <option value="air_quality_index" {% if selected_factor == "air_quality_index" %}selected{% endif %}>Air Quality Index</option>
+            <option value="co2_emissions" {% if selected_factor == "co2_emissions" %}selected{% endif %}>CO2 Emissions</option>
+        </select>
+
+        <button type="submit" class="btn-submit">Submit</button>
+    </form>
+
+    <!-- Scatter Plot Section -->
+    <div>
+        <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
+        {{ plot_html | safe }}
+    </div>
+
+    <a href="{{ url_for('utilities.download_csv', data_key='environmental_data') }}" class="btn-download-csv">
+        Download Environmental Data
+    </a>
+    
+</body>
+</html>
