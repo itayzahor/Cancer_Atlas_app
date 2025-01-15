@@ -7,76 +7,24 @@
 <body>
     <h1>Cancer Atlas</h1>
 
-    <!-- Insights Button -->
-    <div>
-        <a href="/insights" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
-            Insights & Correlations
-        </a>
-    </div>
+    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+
     
     <!-- Include the form -->
     {% include "form.html" %}
     
 
-    {% if heatmap_html %}
-        <div>
-            {{ heatmap_html|safe }}
-        </div>
-
-        {% include "statistics.html" %}
-    {% endif %}
-
-    
-
-    
-
-    <!-- Display results if data is available -->
-    {% if data %}
-        <h2>Results for {{ cancer_type }} in {{ year }}</h2>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>State Name</th>
-                    <th>Cancer Cases</th>
-                    <th>Total Population</th>
-                    <th>Filtered Population</th>
-                    <th>Rate %</th>
-                    <th>Normalized Rate</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in data %}
-                <tr>
-                    <td>{{ row['name'] }}</td>
-                    <td>{{ row['total_count'] }}</td>
-                    <td>{{ row['total_population'] }}</td>
-                    <td>
-                        {% if row['filtered_population'] %}
-                            {{ row['filtered_population'] }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row['rate'] is not none %}
-                            {{ row['rate'] }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row['normalized_rate'] is not none %}
-                            {{ row['normalized_rate'] }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if not data %}
+    <p>No data available for the selected filters. Please adjust your filters and try again.</p>
     {% else %}
-        <p>No data available for the selected filters.</p>
+    <!-- Existing heatmap and stats display -->
+    <div id="heatmap">
+        {{ heatmap_html | safe }}
+    </div>
     {% endif %}
+    <!-- Display results if data is available -->
+    <a href="{{ url_for('utilities.download_csv', data_key='heatmap_data') }}" class="btn-download-csv">
+        Download Heatmap Data
+    </a>    
 </body>
 </html>

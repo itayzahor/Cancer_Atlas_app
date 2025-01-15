@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socioeconomic Analysis</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='shared.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='socioeconomic_analysis.css') }}">
+</head>
+<body>
+    <h1>Socioeconomic Analysis</h1>
+
+    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+
+
+    <!-- Form Section -->
+    <form method="GET" action="/socioeconomic_analysis" class="form-section">
+        <label for="cancer_type">Select Cancer Type:</label>
+        <select id="cancer_type" name="cancer_type">
+            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+            {% for site in cancer_types %}
+            <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
+                {{ site['name'] }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <!-- Socioeconomic Factor Dropdown -->
+        <label for="factor">Select Socioeconomic Factor:</label>
+        <select id="factor" name="factor">
+            <option value="median_income" {% if factor == "median_income" %}selected{% endif %}>Median Income</option>
+            <option value="unemployment_rate" {% if factor == "unemployment_rate" %}selected{% endif %}>Unemployment Rate</option>
+            <option value="insurance_rate" {% if factor == "insurance_rate" %}selected{% endif %}>Insurance Rate</option>
+        </select>
+
+        <button type="submit" class="btn-submit">Submit</button>
+    </form>
+
+    <div>
+        <h2>{{ factor.replace("_", " ").title() }} vs Cancer Mortality Rate</h2>
+        <div>
+            {{ plot_html | safe }}
+        </div>
+    </div>
+
+    <!-- Flexbox Container for Plot and Analysis -->
+    <div class="content">
+        <!-- Scatter Plot Section -->
+        <div class="plot-section">
+            <h2>Scatter Plot</h2>
+            {{ scatter_plot | safe }}
+        </div>
+
+        <!-- Analysis Text Section -->
+        <div class="text-section">
+            <h2>About the Analysis</h2>
+            <p>
+                This scatter plot visualizes the relationship between median income and cancer mortality rates for each state. 
+                Each point represents a state, and the tooltip displays the state's name.
+            </p>
+            <p>
+                Use the dropdown above to filter by specific cancer types. Selecting "All Cancer Types" will display the overall analysis across all cancers.
+            </p>
+            <p>
+                Median Income is shown on the x-axis, and Cancer Mortality Rate (per 1,000 population) is shown on the y-axis.
+            </p>
+        </div>
+    </div>
+
+    <a href="{{ url_for('utilities.download_csv', data_key='socioeconomic_data') }}" class="btn-download-csv">
+        Download Socioeconomic Data
+    </a>
+    
+</body>
+</html>

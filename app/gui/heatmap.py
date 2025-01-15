@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 from ..db.db_connector import get_db_connection
 from ..db.queries import *
 import os
@@ -89,11 +89,9 @@ def calculate_rates(data, filters):
 
     return rates
 
-
-
-@heatmap_bp.route('/heatmap', methods=['GET', 'POST'])
+@heatmap_bp.route('/', methods=['GET'])
 def heatmap():
-    show_advanced = 'false'
+    show_advanced = request.args.get('show_advanced', 'false')
 
     data = []
     stats = {}
@@ -107,80 +105,65 @@ def heatmap():
     cursor.close()
     conn.close()
 
-    # Default filter values (for "no filter" case)
-    cancer_type = "-"
-    year = "-"
-    is_female = "-"
-    is_alive = "-"
-    race_id = "-"
-    unemployement_min = None
-    unemployement_max = None
-    median_min = None
-    median_max = None
-    insurance_min = None
-    insurance_max = None
-    inactivity_min = None
-    inactivity_max = None
-    cigarette_min = None
-    cigarette_max = None
+    # Get user inputs from the query string
+    cancer_type = request.args.get('cancer_type', "-")
+    year = request.args.get('year', "-")
+    is_female = request.args.get('is_female', "-")
+    is_alive = request.args.get('is_alive', "-")
+    race_id = request.args.get('race_id', "-")
+    unemployement_min = request.args.get('unemployement_min')
+    unemployement_max = request.args.get('unemployement_max')
+    median_min = request.args.get('median_min')
+    median_max = request.args.get('median_max')
+    insurance_min = request.args.get('insurance_min')
+    insurance_max = request.args.get('insurance_max')
+    inactivity_min = request.args.get('inactivity_min')
+    inactivity_max = request.args.get('inactivity_max')
+    cigarette_min = request.args.get('cigarette_min')
+    cigarette_max = request.args.get('cigarette_max')
 
-    # Handle GET and POST requests the same way
-    if request.method in ['GET', 'POST']:
-        if request.method == 'POST':
-            # Get visibility state for advanced filters
-            show_advanced = request.form.get('show_advanced', 'false')
+    # Convert form inputs to proper data types
+    unemployement_min = float(unemployement_min) if unemployement_min else None
+    unemployement_max = float(unemployement_max) if unemployement_max else None
+    median_min = int(median_min) if median_min else None
+    median_max = int(median_max) if median_max else None
+    insurance_min = float(insurance_min) if insurance_min else None
+    insurance_max = float(insurance_max) if insurance_max else None
+    inactivity_min = float(inactivity_min) if inactivity_min else None
+    inactivity_max = float(inactivity_max) if inactivity_max else None
+    cigarette_min = float(cigarette_min) if cigarette_min else None
+    cigarette_max = float(cigarette_max) if cigarette_max else None
 
-            # Get user inputs from the form
-            cancer_type = request.form.get('cancer_type', "-")
-            year = request.form.get('year', "-")
-            is_female = request.form.get('is_female', "-")
-            is_alive = request.form.get('is_alive', "-")
-            race_id = request.form.get('race_id', "-")
-            unemployement_min = request.form.get('unemployement_min')
-            unemployement_max = request.form.get('unemployement_max')
-            median_min = request.form.get('median_min')
-            median_max = request.form.get('median_max')
-            insurance_min = request.form.get('insurance_min')
-            insurance_max = request.form.get('insurance_max')
-            inactivity_min = request.form.get('inactivity_min')
-            inactivity_max = request.form.get('inactivity_max')
-            cigarette_min = request.form.get('cigarette_min')
-            cigarette_max = request.form.get('cigarette_max')
+    # Convert to integers if not "All" (`"-"`)
+    cancer_type = int(cancer_type) if cancer_type != "-" else "-"
+    race_id = int(race_id) if race_id != "-" else "-"
+    year = int(year) if year != "-" else "-"
 
-            # Convert form inputs to proper data types
-            unemployement_min = float(unemployement_min) if unemployement_min else None
-            unemployement_max = float(unemployement_max) if unemployement_max else None
-            median_min = int(median_min) if median_min else None
-            median_max = int(median_max) if median_max else None
-            insurance_min = float(insurance_min) if insurance_min else None
-            insurance_max = float(insurance_max) if insurance_max else None
-            inactivity_min = float(inactivity_min) if inactivity_min else None
-            inactivity_max = float(inactivity_max) if inactivity_max else None
-            cigarette_min = float(cigarette_min) if cigarette_min else None
-            cigarette_max = float(cigarette_max) if cigarette_max else None
-
-            # Convert to integers if not "All" (`"-"`)
-            cancer_type = int(cancer_type) if cancer_type != "-" else "-"
-            race_id = int(race_id) if race_id != "-" else "-"
-            year = int(year) if year != "-" else "-"
-
-        # Fetch data from the database
+    try:
         conn, cursor = get_db_connection()
         data = fetch_heatmap_data(
             cursor, cancer_type, year, is_female, is_alive, race_id,
-            unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max
+            unemployement_min, unemployement_max, median_min, median_max,
+            insurance_min, insurance_max, inactivity_min, inactivity_max,
+            cigarette_min, cigarette_max
         )
+    except Exception as e:
+        print(f"Database query failed: {e}")
+        data = []  # Fallback to empty data
+    finally:
         cursor.close()
         conn.close()
 
+    # Apply rate calculations
+    filters = {
+        "gender_id": is_female,
+        "race_id": race_id,
+    }
+    data = calculate_rates(data, filters)
 
-        # Apply rate calculations
-        filters = {
-            "gender_id": is_female,
-            "race_id": race_id,
-        }
-        data = calculate_rates(data, filters)
+            
 
+    if data:
         # Calculate statistics
         total_cases = sum(row['total_count'] for row in data if row['total_count'])
         total_rates = sum(row['rate'] for row in data if row['rate'])
@@ -202,7 +185,7 @@ def heatmap():
             }
         }
 
-       # Prepare data for the heatmap
+        # Prepare data for the heatmap
         df = pd.DataFrame(data)
 
         # Add a hover text column for custom display
@@ -235,9 +218,22 @@ def heatmap():
             height=600,  # Increase map height
         )
 
+
         # Convert Plotly figure to HTML
         heatmap_html = fig.to_html(full_html=False)
 
+    else:
+        stats = {
+            'total_cases': 0,
+            'avg_rate': 0,
+            'highest_rate': {'state': 'N/A', 'rate': 'N/A'},
+            'lowest_rate': {'state': 'N/A', 'rate': 'N/A'}
+        }
+        heatmap_html = None
+    
+    
+    # Store the data directly in the session
+    session['heatmap_data'] = data
 
     # Options for dropdowns
     is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]

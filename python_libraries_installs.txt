@@ -8,5 +8,7 @@ pip install plotly
 
 pip install pandas
 
+pip install flask-session
+
 pip install -r requirements.txt
 
