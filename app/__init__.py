@@ -1,6 +1,6 @@
 from flask import Flask
 from app.gui.heatmap import heatmap_bp
-from app.gui.insights import insights_bp
+from app.gui.socioeconomic_analysis import insights_bp
 
 def create_app():
     app = Flask(__name__)
