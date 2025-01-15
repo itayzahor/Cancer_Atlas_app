@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cancer Atlas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='shared.css') }}">
+</head>
+<body>
+    <h1>Welcome to Cancer Atlas</h1>
+    <p>
+        Explore the relationship between socioeconomic factors, environmental issues, and cancer trends across the U.S.
+    </p>
+
+    <!-- Navigation Links -->
+    <div class="navigation">
+        <a href="{{ url_for('heatmap.heatmap') }}" class="nav-link">Explore the Heatmap</a>
+        <a href="{{ url_for('insights.insights') }}" class="nav-link">View Insights & Correlations</a>
+    </div>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .navigation {
+            margin-top: 30px;
+        }
+        .nav-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .nav-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</body>
+</html>

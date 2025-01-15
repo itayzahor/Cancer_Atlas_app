@@ -1,4 +1,4 @@
-def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, unemployement_min, unemployement_max, median_min, median_max):
+def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max):
     """
     Fetch heatmap data including population, cancer cases, and socioeconomic data,
     with a custom unemployment rate range.
@@ -38,6 +38,7 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
         LEFT JOIN demographics d ON s.id = d.state_id
         LEFT JOIN cancer_data c ON d.state_id = c.state_id
         LEFT JOIN socioeconomic_data sd ON s.id = sd.state_id
+        LEFT JOIN risk_factors rf ON s.id = rf.state_id
         WHERE 1=1
     """
 
@@ -61,14 +62,47 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
         params.append(int(race_id))
 
     # Add unemployment rate filter
-    if unemployement_min is not None and unemployement_max is not None:
-        query += " AND sd.unemployment_rate BETWEEN %s AND %s"
-        params.extend([unemployement_min , unemployement_max])
+    if unemployement_min is not None:
+        query += " AND sd.unemployment_rate >= %s"
+        params.append(unemployement_min)
+    if unemployement_max is not None:
+        query += " AND sd.unemployment_rate <= %s"
+        params.append(unemployement_max)
 
     # Add median income filter
-    if median_min is not None and median_max is not None:
-        query += " AND sd.median_income BETWEEN %s AND %s"
-        params.extend([median_min, median_max])
+    if median_min is not None:
+        query += " AND sd.median_income >= %s"
+        params.append(median_min)
+    if median_max is not None:
+        query += " AND sd.median_income <= %s"
+        params.append(median_max)
+
+    # Add insurance rate filter
+    if insurance_min is not None:
+        query += " AND sd.insurance_rate >= %s"
+        params.append(insurance_min)
+    if insurance_max is not None:
+        query += " AND sd.insurance_rate <= %s"
+        params.append(insurance_max)
+
+    # Add inactivity rate filter
+    if inactivity_min is not None:
+        query += " AND rf.inactivity_rate >= %s"
+        params.append(inactivity_min)
+    if inactivity_max is not None:
+        query += " AND rf.inactivity_rate <= %s"
+        params.append(inactivity_max)
+
+    # Add cigarette use rate filter
+    if cigarette_min is not None:
+        query += " AND rf.cigarette_use_rate >= %s"
+        params.append(cigarette_min)
+    if cigarette_max is not None:
+        query += " AND rf.cigarette_use_rate <= %s"
+        params.append(cigarette_max)
+
+
+
 
     query += """
         GROUP BY 
