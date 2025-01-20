@@ -121,11 +121,10 @@ def heatmap():
     inactivity_max = request.args.get('inactivity_max')
     cigarette_min = request.args.get('cigarette_min')
     cigarette_max = request.args.get('cigarette_max')
-    # Get environmental filters from the form
-    aqi_min = request.form.get('aqi_min')
-    aqi_max = request.form.get('aqi_max')
-    co2_min = request.form.get('co2_min')
-    co2_max = request.form.get('co2_max')
+    aqi_min = request.args.get('aqi_min')
+    aqi_max = request.args.get('aqi_max')
+    co2_min = request.args.get('co2_min')
+    co2_max = request.args.get('co2_max')
 
     # Convert form inputs to proper data types
     unemployement_min = float(unemployement_min) if unemployement_min else None
