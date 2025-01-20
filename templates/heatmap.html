@@ -1,55 +1,64 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Cancer Heatmap</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='insights.css') }}">
-</head>
-<body>
-    <h1>Cancer Atlas</h1>
+{% extends "base.html" %}
 
-    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+{% block title %}Cancer Atlas - Heatmap{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/heatmap.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 class="mb-4">Cancer Distribution Heatmap</h1>
     
-    <!-- Include the form -->
-    {% include "form.html" %}
-    
+    <!-- Form Section -->
+    <div class="form-section">
+        {% include "form.html" %}
+    </div>
 
-    
-    <!-- Flexbox Container for Heatmap and Analysis -->
-    <div class="content">
-        <!-- Heatmap Section -->
-        {% if not data %}
-        <p>No data available for the selected filters. Please adjust your filters and try again.</p>
-        {% else %}
-        <!-- Existing heatmap and stats display -->
-        <div id="heatmap">
-            {{ heatmap_html | safe }}
-        </div>
-        {% endif %}
-
-        <!-- Analysis Text Section -->
-        <div class="text-section">
-            <h2>About the Heatmap</h2>
-            <p>
-                This heatmap visualizes cancer cases across the U.S., integrating demographics, socioeconomic factors, behavioral risk factors, and environmental data. Users can apply filters for gender, race, socioeconomic factors, or risk factors to explore detailed trends.
-            </p>
-            <p>
-                Cancer rates are dynamically calculated based on the selected filters, adjusting the population base accordingly. For example, selecting "Female" and "Asian" uses only the female Asian population for each state. 
-            </p>
-            <p>
-                The normalized rate for each state is calculated using the formula:
-                <code>Normalized Rate = (Rate - Min Rate) / (Max Rate - Min Rate)</code>. 
-                This ensures that the color intensity in the heatmap consistently reflects relative differences in cancer rates across states, highlighting areas of concern effectively.
-            </p>
-            <p>
-                By combining demographic adjustments with socioeconomic, behavioral, and environmental data, the heatmap offers a comprehensive view of health disparities. This visualization helps identify at-risk populations and regions, supporting more targeted and equitable public health initiatives.
-            </p>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
-    <!-- Display results if data is available -->
-    <a href="{{ url_for('utilities.download_csv', data_key='heatmap_data') }}" class="btn-download-csv">
-        Download Heatmap Data
-    </a>    
-</body>
-</html>
+    <!-- Heatmap Section -->
+    <div class="visualization-container">
+        {% if not data %}
+            <div class="alert alert-info">
+                No data available for the selected filters. Please adjust your filters and try again.
+            </div>
+        {% else %}
+            <div id="heatmap">
+                {{ heatmap_html | safe }}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Analysis Section -->
+    <div class="analysis-section">
+        <h2>About the Heatmap</h2>
+        <p>This heatmap visualizes cancer cases across the U.S., integrating demographics, socioeconomic factors, behavioral risk factors, and environmental data.</p>
+        <p>
+            Cancer rates are dynamically calculated based on the selected filters, adjusting the population base accordingly. For example, selecting "Female" and "Asian" uses only the female Asian population for each state. 
+        </p>
+        <p>
+            The normalized rate for each state is calculated using the formula:
+            <code>Normalized Rate = (Rate - Min Rate) / (Max Rate - Min Rate)</code>. 
+            This ensures that the color intensity in the heatmap consistently reflects relative differences in cancer rates across states, highlighting areas of concern effectively.
+        </p>
+        <p>
+            By combining demographic adjustments with socioeconomic, behavioral, and environmental data, the heatmap offers a comprehensive view of health disparities. This visualization helps identify at-risk populations and regions, supporting more targeted and equitable public health initiatives.
+        </p>
+    </div>
+
+    <!-- Download Button -->
+    <a href="{{ url_for('utilities.download_csv', data_key='heatmap_data') }}" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Data
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/heatmap.js') }}"></script>
+{% endblock %}
