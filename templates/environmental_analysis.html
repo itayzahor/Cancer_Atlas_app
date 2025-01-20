@@ -31,10 +31,41 @@
         <button type="submit" class="btn-submit">Submit</button>
     </form>
 
-    <!-- Scatter Plot Section -->
-    <div>
-        <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
-        {{ plot_html | safe }}
+    <!-- Flexbox Container for Plot and Analysis -->
+    <div class="content">
+        <!-- Scatter Plot Section -->
+        <div class="plot-section">
+            <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
+            {{ plot_html | safe }}
+        </div>
+
+        <!-- Analysis Text Section -->
+        <div class="text-section">
+            <h2>About the Analysis</h2>
+            <p>
+                This analysis explores the relationship between selected environmental factors 
+                (Air Quality Index or CO2 Emissions) and cancer incidence rates across states 
+                in the U.S. Users can refine the analysis by selecting a specific cancer type 
+                or viewing data for all cancers combined.
+            </p>
+            <p>
+                Cancer incidence is measured as the number of newly diagnosed cases per 1,000 people, 
+                calculated using aggregated cancer data normalized against state populations. This 
+                provides a standardized view of the burden of new cancer cases in each state.
+            </p>
+            <p>
+                The scatter plot visualizes the relationship, with the selected environmental factor 
+                shown on the x-axis and the cancer incidence rate on the y-axis. Each point represents 
+                a state, and tooltips display the state name and corresponding data values. The plot 
+                allows users to observe trends or anomalies that may indicate correlations between 
+                environmental factors and cancer incidence.
+            </p>
+            <p>
+                This insight highlights the importance of environmental conditions in public health 
+                and cancer prevention, offering valuable information to guide sustainability policies 
+                and interventions aimed at improving community health outcomes.
+            </p>
+        </div>
     </div>
 
     <a href="{{ url_for('utilities.download_csv', data_key='environmental_data') }}" class="btn-download-csv">

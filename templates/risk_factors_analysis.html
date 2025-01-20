@@ -31,10 +31,43 @@
         <button type="submit" class="btn-submit">Submit</button>
     </form>
 
-    <!-- Scatter Plot Section -->
-    <div>
-        <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
-        {{ plot_html | safe }}
+
+    <!-- Flexbox Container for Plot and Analysis -->
+    <div class="content">
+        <!-- Scatter Plot Section -->
+        <div class="plot-section">
+            <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
+            {{ plot_html | safe }}
+        </div>
+
+        <!-- Analysis Text Section -->
+        <div class="text-section">
+            <h2>About the Analysis</h2>
+            <p>
+                This analysis explores the relationship between selected behavioral risk factors 
+                (Cigarette Use Rate or Physical Inactivity Rate) and cancer incidence rates across 
+                states in the U.S. Users can further refine the analysis by selecting a specific 
+                cancer type or viewing data for all cancers.
+            </p>
+            <p>
+                Cancer incidence is measured as the number of newly diagnosed cases per 1,000 people, 
+                calculated using aggregated cancer data and normalized against state populations. 
+                This metric provides a standardized measure of the burden of new cancer cases in 
+                each state.
+            </p>
+            <p>
+                The scatter plot visualizes the relationship between the selected risk factor 
+                (x-axis) and cancer incidence rate (y-axis). Each point represents a state, and 
+                tooltips display the state name and corresponding data values. The plot allows 
+                users to observe patterns or trends that may indicate a correlation between 
+                behavioral risk factors and cancer incidence.
+            </p>
+            <p>
+                This insight highlights the potential impact of public health initiatives aimed 
+                at reducing behavioral risk factors to lower cancer incidence rates, offering 
+                valuable information for policy-making and health interventions.
+            </p>
+        </div>
     </div>
 
     <a href="{{ url_for('utilities.download_csv', data_key='risk_factors_data') }}" class="btn-download-csv">

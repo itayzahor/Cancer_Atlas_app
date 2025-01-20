@@ -34,18 +34,12 @@
         <button type="submit" class="btn-submit">Submit</button>
     </form>
 
-    <div>
-        <h2>{{ factor.replace("_", " ").title() }} vs Cancer Mortality Rate</h2>
-        <div>
-            {{ plot_html | safe }}
-        </div>
-    </div>
 
     <!-- Flexbox Container for Plot and Analysis -->
     <div class="content">
         <!-- Scatter Plot Section -->
         <div class="plot-section">
-            <h2>Scatter Plot</h2>
+            <h2>{{ factor.replace("_", " ").title() }} vs Cancer Mortality Rate</h2>
             {{ scatter_plot | safe }}
         </div>
 
@@ -53,17 +47,30 @@
         <div class="text-section">
             <h2>About the Analysis</h2>
             <p>
-                This scatter plot visualizes the relationship between median income and cancer mortality rates for each state. 
-                Each point represents a state, and the tooltip displays the state's name.
+                This analysis examines the relationship between selected socioeconomic factors 
+                (Median Income, Unemployment Rate, or Insurance Rate) and cancer mortality rates 
+                across states in the U.S. The user can refine the analysis by selecting a specific 
+                cancer type or viewing data across all cancers.
             </p>
             <p>
-                Use the dropdown above to filter by specific cancer types. Selecting "All Cancer Types" will display the overall analysis across all cancers.
+                The mortality rate is calculated as the number of cancer-related deaths per 1,000 
+                people in a state, derived from aggregated cancer mortality data and normalized 
+                against the total population. This metric provides insight into the prevalence of 
+                cancer-related deaths within the population.
             </p>
             <p>
-                Median Income is shown on the x-axis, and Cancer Mortality Rate (per 1,000 population) is shown on the y-axis.
+                The scatter plot visualizes this relationship, with the selected socioeconomic factor 
+                shown on the x-axis and the cancer mortality rate on the y-axis. Each point represents 
+                a state, and tooltips provide the state name and corresponding data values. Patterns 
+                or outliers in the plot may reveal disparities or correlations influenced by socioeconomic conditions.
+            </p>
+            <p>
+                This analysis empowers users to explore how socioeconomic disparities impact cancer outcomes, 
+                facilitating a deeper understanding of public health challenges and informing policy or intervention strategies.
             </p>
         </div>
     </div>
+
 
     <a href="{{ url_for('utilities.download_csv', data_key='socioeconomic_data') }}" class="btn-download-csv">
         Download Socioeconomic Data

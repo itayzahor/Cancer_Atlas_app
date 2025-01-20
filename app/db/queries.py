@@ -1,4 +1,4 @@
-def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max):
+def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
     """
     Fetch heatmap data including population, cancer cases, and socioeconomic data,
     with a custom unemployment rate range.
@@ -33,12 +33,15 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
             d.hispanic_population,
             d.native_pacific_population,
             sd.unemployment_rate,
-            sd.median_income
+            sd.median_income,
+            e.air_quality_index,
+            e.co2_emissions
         FROM states s
         LEFT JOIN demographics d ON s.id = d.state_id
         LEFT JOIN cancer_data c ON d.state_id = c.state_id
         LEFT JOIN socioeconomic_data sd ON s.id = sd.state_id
         LEFT JOIN risk_factors rf ON s.id = rf.state_id
+        LEFT JOIN environmental e ON s.id = e.state_id
         WHERE 1=1
     """
 
@@ -101,7 +104,21 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
         query += " AND rf.cigarette_use_rate <= %s"
         params.append(cigarette_max)
 
+    # Add air quality filter
+    if aqi_min is not None:
+        query += " AND e.air_quality_index >= %s"
+        params.append(aqi_min)
+    if aqi_max is not None:
+        query += " AND e.air_quality_index <= %s"
+        params.append(aqi_max)
 
+    # Add co2 filter
+    if co2_min is not None:
+        query += " AND e.co2_emissions >= %s"
+        params.append(co2_min)
+    if co2_max is not None:
+        query += " AND e.co2_emissions <= %s"
+        params.append(co2_max)
 
 
     query += """
@@ -116,7 +133,9 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
             d.hispanic_population,
             d.native_pacific_population,
             sd.unemployment_rate,
-            sd.median_income;
+            sd.median_income,
+            e.air_quality_index,
+            e.co2_emissions;
     """
 
     # Execute the query
