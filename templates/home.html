@@ -16,8 +16,103 @@
         <a href="{{ url_for('socioeconomic_analysis.socioeconomic_analysis') }}" class="nav-link">Socioeconomic Analysis</a>
         <a href="{{ url_for('risk_factors_analysis.risk_factors_analysis') }}" class="nav-link">Risk Factors Analysis</a>
         <a href="{{ url_for('environmental_analysis.environmental_analysis') }}" class="nav-link">Environmental Data Analysis</a>
+    </div>
 
+    <!-- Sources Section -->
+    <div class="sources-section">
+        <h2>Data Sources</h2>
+        <p>
+            The data used in Cancer Atlas is sourced from reliable government and research organizations. Below is an overview of the sources:
+        </p>
+        <ul>
+            <li>
+                <strong>Cancer Data:</strong> Sourced from the 
+                <a href="https://www.cdc.gov/united-states-cancer-statistics/dataviz/data-tables.html" target="_blank">
+                    U.S. Cancer Statistics Data Visualizations Tool
+                </a>. We used the "By Area" table, focusing on fields such as area, count, event type, race, sex, site, and year. 
+                This dataset provides comprehensive insights into cancer incidence and mortality trends, covering over 98% of the U.S. population. The data spans from 1999 to 2021, offering a detailed historical perspective on cancer statistics. 
+                It serves as the foundation for analyzing geographic disparities and guiding targeted public health strategies.
+            </li>
+            
+            <li>
+                <strong>Socioeconomic Data:</strong> Derived from three key datasets provided by the U.S. Census Bureau:
+                <ul>
+                    <li>
+                        <strong>Employment Data:</strong> Data from the 
+                        <a href="https://data.census.gov/table/ACSST1Y2023.S2301?q=Employment%20&g=010XX00US$0400000&moe=false" target="_blank">
+                            2023 American Community Survey (ACS) Employment Table
+                        </a>. We used the "State" and "Unemployment Rate" fields to capture the percentage of unemployed individuals across states. These values provide a snapshot of employment disparities.
+                    </li>
+                    <li>
+                        <strong>Health Insurance Data:</strong> Data from the 
+                        <a href="https://data.census.gov/table/ACSST1Y2023.S2701?t=Health%20Insurance&g=010XX00US$0400000&moe=false&tp=false" target="_blank">
+                            2023 ACS Health Insurance Table
+                        </a>. This dataset reports the percentage of insured individuals in the total population for each state. For our analysis, we used the "Percent Insured" field to understand access to health coverage across regions.
+                    </li>
+                    <li>
+                        <strong>Median Income Data:</strong> Data from the 
+                        <a href="https://data.census.gov/table/ACSST1Y2023.S1901?q=median%20income%20by%20state&g=010XX00US$0400000&moe=false" target="_blank">
+                            2023 ACS Median Income Table
+                        </a>. This dataset provides state-level median income values, offering insights into economic disparities that may influence health outcomes.
+                    </li>
+                </ul>
+                By combining unemployment rates, health insurance coverage, and median income, this data highlights critical socioeconomic factors that can shape cancer outcomes and disparities across the U.S.
+            </li>
+            
+            <li>
+                <strong>Risk Factors Data:</strong> Sourced from two key datasets provided by the CDC:
+                <ul>
+                    <li>
+                        <strong>Cigarette Usage Among Adults:</strong> Data from the 
+                        <a href="https://www.cdc.gov/statesystem/cigaretteuseadult.html" target="_blank">
+                            CDC State System on Cigarette Use Among Adults (2019)
+                        </a>. This dataset provides state-level estimates of cigarette usage rates among adults, derived from sample sizes reported in the study. It also includes confidence intervals for each estimate. For our analysis, we used the "Data Value" field to represent the cigarette use rate for each state, which reflects the percentage of adults who report smoking cigarettes within the given sample population.
+                    </li>
+                    <li>
+                        <strong>Physical Inactivity Prevalence:</strong> Data from the 
+                        <a href="https://www.cdc.gov/physical-activity/php/data/inactivity-maps.html" target="_blank">
+                            CDC Physical Inactivity Maps (2017–2020)
+                        </a>. This dataset includes state-level prevalence rates of physical inactivity, defined as the percentage of adults who report not engaging in leisure-time physical activity. The combined data for these years highlights regional trends in inactivity and associated health risks.
+                    </li>
+                </ul>
+                By combining these behavioral risk factors, the data provides valuable insights into how lifestyle choices may influence cancer incidence and disparities across different states.
+            </li>            
+            
+            <li>
+                <strong>Environmental Data:</strong> Sourced from two reliable datasets:
+                <ul>
+                    <li>
+                        <strong>Air Quality Index (AQI):</strong> Data from the 
+                        <a href="https://www.epa.gov/outdoor-air-quality-data" target="_blank">
+                            U.S. Environmental Protection Agency (EPA) Outdoor Air Quality Data
+                        </a>. This dataset provides detailed metrics on air quality, including daily AQI readings. 
+                        We calculated state-level averages using the median AQI values for all counties, representing typical air quality conditions. 
+                        Median AQI is the middle value of daily readings, providing a robust indicator of air quality less influenced by outliers. 
+                        The data reflects conditions true as of 2024, helping to explore the potential link between environmental quality and cancer incidence.
+                    </li>
+                    <li>
+                        <strong>CO<sub>2</sub> Emissions:</strong> Data from the 
+                        <a href="https://www.eia.gov/environment/emissions/state/" target="_blank">
+                            U.S. Energy Information Administration (EIA) Table 4
+                        </a>. This dataset includes state-level metrics on energy-related carbon dioxide emissions per capita for the year 2022. 
+                        These values reflect the environmental footprint of energy consumption, which may contribute to long-term health risks 
+                        and disparities in cancer outcomes.
+                    </li>
+                </ul>
+                By combining AQI and CO<sub>2</sub> emission data, we gain a comprehensive view of environmental factors that may influence cancer incidence and public health outcomes.
+            </li>
 
+            <li>
+                <strong>Demographics Data:</strong> Sourced from the 
+                <a href="https://data.census.gov/table/ACSDP1Y2023.DP05?q=race%20and%20gender%20rates%20by%20state&t=Populations%20and%20People" target="_blank">
+                    2023 American Community Survey (ACS) Demographics Table
+                </a>. This dataset provides detailed population statistics for each state, including total population, male and female populations, and race-specific population counts. We used this data to dynamically filter populations based on the user-selected filters in the heatmap activity (e.g., race or gender). This ensures that cancer rates are calculated relative to the specific population being analyzed, offering more accurate insights into health disparities and trends.
+            </li>            
+            
+        </ul>
+        <p>
+            These datasets were selected to provide accurate and comprehensive insights into cancer trends and related factors across the U.S.
+        </p>
     </div>
 
     <style>
@@ -40,6 +135,32 @@
         }
         .nav-link:hover {
             background-color: #0056b3;
+        }
+        .sources-section {
+            margin-top: 50px;
+            text-align: left;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        .sources-section h2 {
+            text-align: center;
+            color: #333;
+        }
+        .sources-section ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .sources-section ul li {
+            margin-bottom: 10px;
+        }
+        .sources-section a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .sources-section a:hover {
+            text-decoration: underline;
         }
     </style>
 </body>

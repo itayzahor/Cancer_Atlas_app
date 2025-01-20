@@ -35,15 +35,15 @@ def calculate_rates(data, filters):
         race_population = 0
 
         # Determine the race-specific population
-        if filters['race_id'] == 1:  # American Indian/Alaska Native, Non-Hispanic
+        if filters['race_id'] == 1:  
             race_population = float(row.get('native_pacific_population', 0))
-        elif filters['race_id'] == 2:  # Black, Non-Hispanic
+        elif filters['race_id'] == 2:  
             race_population = float(row.get('black_population', 0))
-        elif filters['race_id'] == 3:  # Hispanic
+        elif filters['race_id'] == 3: 
             race_population = float(row.get('hispanic_population', 0))
-        elif filters['race_id'] == 4:  # Non-Hispanic Asian/Pacific Islander
+        elif filters['race_id'] == 4:  
             race_population = float(row.get('asian_population', 0))
-        elif filters['race_id'] == 5:  # Non-Hispanic White
+        elif filters['race_id'] == 5: 
             race_population = float(row.get('white_population', 0))
         else:  # All races
             race_population = total_population
@@ -121,6 +121,11 @@ def heatmap():
     inactivity_max = request.args.get('inactivity_max')
     cigarette_min = request.args.get('cigarette_min')
     cigarette_max = request.args.get('cigarette_max')
+    # Get environmental filters from the form
+    aqi_min = request.form.get('aqi_min')
+    aqi_max = request.form.get('aqi_max')
+    co2_min = request.form.get('co2_min')
+    co2_max = request.form.get('co2_max')
 
     # Convert form inputs to proper data types
     unemployement_min = float(unemployement_min) if unemployement_min else None
@@ -133,6 +138,11 @@ def heatmap():
     inactivity_max = float(inactivity_max) if inactivity_max else None
     cigarette_min = float(cigarette_min) if cigarette_min else None
     cigarette_max = float(cigarette_max) if cigarette_max else None
+    aqi_min = float(aqi_min) if aqi_min else None
+    aqi_max = float(aqi_max) if aqi_max else None
+    co2_min = float(co2_min) if co2_min else None
+    co2_max = float(co2_max) if co2_max else None
+
 
     # Convert to integers if not "All" (`"-"`)
     cancer_type = int(cancer_type) if cancer_type != "-" else "-"
@@ -145,8 +155,8 @@ def heatmap():
             cursor, cancer_type, year, is_female, is_alive, race_id,
             unemployement_min, unemployement_max, median_min, median_max,
             insurance_min, insurance_max, inactivity_min, inactivity_max,
-            cigarette_min, cigarette_max
-        )
+            cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max)
+        
     except Exception as e:
         print(f"Database query failed: {e}")
         data = []  # Fallback to empty data
@@ -237,7 +247,7 @@ def heatmap():
 
     # Options for dropdowns
     is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
-    is_alive_options = [{'value': '1', 'label': 'Incidence'}, {'value': '0', 'label': 'Mortality'}]    
+    is_alive_options = [{'value': '1', 'label': 'New Cancer Cases'}, {'value': '0', 'label': 'Cancer-Related Deaths'}]    
 
     # Render the template with data and dropdown options
     return render_template(
@@ -263,6 +273,10 @@ def heatmap():
         inactivity_max=inactivity_max,
         cigarette_min=cigarette_min,
         cigarette_max=cigarette_max,
+        aqi_min=aqi_min,
+        aqi_max=aqi_max,
+        co2_min=co2_min,
+        co2_max=co2_max,
         show_advanced=show_advanced,
         stats=stats,
         heatmap_html=heatmap_html

@@ -40,4 +40,20 @@
         <span> - </span>
         <input type="number" step="0.01" name="cigarette_max" value="{{ cigarette_max or '' }}" placeholder="Maximum">
     </div>
+
+    <!-- Air Quality Index (AQI) Filter -->
+    <div class="filter-group">
+        <label>Air Quality Index (AQI):</label>
+        <input type="number" step="1" name="aqi_min" value="{{ aqi_min or '' }}" placeholder="Minimum">
+        <span> - </span>
+        <input type="number" step="1" name="aqi_max" value="{{ aqi_max or '' }}" placeholder="Maximum">
+    </div>
+
+    <!-- CO2 Emissions Filter -->
+    <div class="filter-group">
+        <label>CO2 Emissions (Metric Tons per Capita):</label>
+        <input type="number" step="0.01" name="co2_min" value="{{ co2_min or '' }}" placeholder="Minimum">
+        <span> - </span>
+        <input type="number" step="0.01" name="co2_max" value="{{ co2_max or '' }}" placeholder="Maximum">
+    </div>
 </div>
