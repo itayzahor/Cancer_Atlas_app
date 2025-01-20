@@ -1,80 +1,118 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Socioeconomic Analysis</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='shared.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='socioeconomic_analysis.css') }}">
-</head>
-<body>
-    <h1>Socioeconomic Analysis</h1>
+{% extends "base.html" %}
 
-    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+{% block title %}Cancer Atlas - Socioeconomic Analysis{% endblock %}
 
+{% block content %}
+<div class="content-section">
+    <div class="section-header">
+        <h1 class="mb-4">Socioeconomic Impact Analysis</h1>
+        <p class="lead">Explore how socioeconomic factors correlate with cancer mortality rates across states.</p>
+    </div>
 
-    <!-- Form Section -->
-    <form method="GET" action="/socioeconomic_analysis" class="form-section">
-        <label for="cancer_type">Select Cancer Type:</label>
-        <select id="cancer_type" name="cancer_type">
-            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
-            {% for site in cancer_types %}
-            <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
-                {{ site['name'] }}
-            </option>
-            {% endfor %}
-        </select>
+    <div class="analysis-controls">
+        <form method="GET" action="{{ url_for('socioeconomic_analysis.socioeconomic_analysis') }}" class="form-section">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="cancer_type" class="form-label">Cancer Type</label>
+                    <select id="cancer_type" name="cancer_type" class="form-select">
+                        <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+                        {% for site in cancer_types %}
+                        <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
+                            {{ site['name'] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="factor" class="form-label">Socioeconomic Factor</label>
+                    <select id="factor" name="factor" class="form-select">
+                        <option value="median_income" {% if factor == "median_income" %}selected{% endif %}>Median Income</option>
+                        <option value="unemployment_rate" {% if factor == "unemployment_rate" %}selected{% endif %}>Unemployment Rate</option>
+                        <option value="insurance_rate" {% if factor == "insurance_rate" %}selected{% endif %}>Insurance Coverage Rate</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Update Analysis</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
-        <!-- Socioeconomic Factor Dropdown -->
-        <label for="factor">Select Socioeconomic Factor:</label>
-        <select id="factor" name="factor">
-            <option value="median_income" {% if factor == "median_income" %}selected{% endif %}>Median Income</option>
-            <option value="unemployment_rate" {% if factor == "unemployment_rate" %}selected{% endif %}>Unemployment Rate</option>
-            <option value="insurance_rate" {% if factor == "insurance_rate" %}selected{% endif %}>Insurance Rate</option>
-        </select>
-
-        <button type="submit" class="btn-submit">Submit</button>
-    </form>
-
-
-    <!-- Flexbox Container for Plot and Analysis -->
-    <div class="content">
-        <!-- Scatter Plot Section -->
-        <div class="plot-section">
-            <h2>{{ factor.replace("_", " ").title() }} vs Cancer Mortality Rate</h2>
+    <div class="visualization-container">
+        <div id="plot-wrapper">
             {{ scatter_plot | safe }}
-        </div>
-
-        <!-- Analysis Text Section -->
-        <div class="text-section">
-            <h2>About the Analysis</h2>
-            <p>
-                This analysis examines the relationship between selected socioeconomic factors 
-                (Median Income, Unemployment Rate, or Insurance Rate) and cancer mortality rates 
-                across states in the U.S. The user can refine the analysis by selecting a specific 
-                cancer type or viewing data across all cancers.
-            </p>
-            <p>
-                The mortality rate is calculated as the number of cancer-related deaths per 1,000 
-                people in a state, derived from aggregated cancer mortality data and normalized 
-                against the total population. This metric provides insight into the prevalence of 
-                cancer-related deaths within the population.
-            </p>
-            <p>
-                The scatter plot visualizes this relationship, with the selected socioeconomic factor 
-                shown on the x-axis and the cancer mortality rate on the y-axis. Each point represents 
-                a state, and tooltips provide the state name and corresponding data values. Patterns 
-                or outliers in the plot may reveal disparities or correlations influenced by socioeconomic conditions.
-            </p>
-            <p>
-                This analysis empowers users to explore how socioeconomic disparities impact cancer outcomes, 
-                facilitating a deeper understanding of public health challenges and informing policy or intervention strategies.
-            </p>
         </div>
     </div>
 
+    <div class="analysis-section">
+        <h2>Analysis Insights</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="insight-card">
+                    <h3>Economic Impact</h3>
+                    <ul>
+                        <li>Income level correlations</li>
+                        <li>Employment status effects</li>
+                        <li>Healthcare access patterns</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="insight-card">
+                    <h3>Regional Patterns</h3>
+                    <ul>
+                        <li>Geographic disparities</li>
+                        <li>Urban vs. rural differences</li>
+                        <li>State-level variations</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="insight-card">
+                    <h3>Policy Implications</h3>
+                    <ul>
+                        <li>Healthcare accessibility</li>
+                        <li>Economic support programs</li>
+                        <li>Resource allocation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    <a href="{{ url_for('utilities.download_csv', data_key='socioeconomic_data') }}" class="btn-download-csv">
-        Download Socioeconomic Data
-    </a>
-    
-</body>
-</html>
+{% block extra_css %}
+<style>
+    .insight-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
+
+    .insight-card:hover {
+        transform: translateY(-5px);
+    }
+
+    #plot-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const plotWrapper = document.getElementById('plot-wrapper');
+
+    form.addEventListener('submit', function(e) {
+        plotWrapper.style.opacity = '0.5';
+        plotWrapper.style.pointerEvents = 'none';
+    });
+});
+</script>
+{% endblock %}

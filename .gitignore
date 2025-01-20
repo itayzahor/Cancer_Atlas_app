@@ -2,3 +2,4 @@ venv/
 
 flask_session/
 
+app/db/db_connector.py
