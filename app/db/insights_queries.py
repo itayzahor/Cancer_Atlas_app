@@ -21,7 +21,7 @@ def socioeconomic_vs_mortality(cancer_type, factor):
                 c.is_alive = 0
     """
     if cancer_type != "-":
-        query += f" AND c.site_id = {int(cancer_type)}"
+        query += f" AND c.cancer_type_id = {int(cancer_type)}"
 
     query += f"""
              GROUP BY c.state_id
@@ -57,7 +57,7 @@ def risk_factors_vs_incidence(cancer_type, factor):
                 c.is_alive = 1  -- Only incidence data
     """
     if cancer_type != "-":
-        query += f" AND c.site_id = {int(cancer_type)}"
+        query += f" AND c.cancer_type_id = {int(cancer_type)}"
 
     query += f"""
              GROUP BY c.state_id
@@ -94,7 +94,7 @@ def environmental_vs_incidence(cancer_type, factor):
                 c.is_alive = 1  -- Only incidence data
     """
     if cancer_type != "-":
-        query += f" AND c.site_id = {int(cancer_type)}"
+        query += f" AND c.cancer_type_id = {int(cancer_type)}"
 
     query += f"""
              GROUP BY c.state_id

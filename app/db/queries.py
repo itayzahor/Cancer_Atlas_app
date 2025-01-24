@@ -1,21 +1,37 @@
-def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, unemployement_min, unemployement_max, median_min, median_max, insurance_min, insurance_max, inactivity_min, inactivity_max, cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
+def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
+                            unemployement_min, unemployement_max, median_min,
+                            median_max, insurance_min, insurance_max,
+                            inactivity_min, inactivity_max, cigarette_min,
+                            cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
     """
-    Fetch heatmap data including population, cancer cases, and socioeconomic data,
-    with a custom unemployment rate range.
+    Constructs the heatmap query dynamically with the given filters.
 
     Args:
         cursor: Database cursor for executing queries.
-        cancer_type (str): Filter by cancer type. Use "-" for no filter.
-        year (str): Filter by year. Use "-" for no filter.
-        is_female (str): Filter by gender. Use "-" for no filter.
-        is_alive (str): Filter by survival status. Use "-" for no filter.
-        race_id (str): Filter by race. Use "-" for no filter.
-        min_rate (float): Minimum unemployment rate for filtering.
-        max_rate (float): Maximum unemployment rate for filtering.
+
+    Fields for Filtering:
+        - cancer_type (str): ID of the cancer type to filter by. Use "-" for no filter.
+        - year (str): Year to filter by. Use "-" for no filter.
+        - is_female (str): Filter by gender (1 for female, 0 for male). Use "-" for no filter.
+        - is_alive (str): Filter by survival status (1 for alive, 0 for deceased). Use "-" for no filter.
+        - race_id (str): ID of the race to filter by. Use "-" for no filter.
+        - unemployement_min (float): Minimum unemployment rate.
+        - unemployement_max (float): Maximum unemployment rate.
+        - median_min (int): Minimum median income.
+        - median_max (int): Maximum median income.
+        - insurance_min (float): Minimum insurance rate.
+        - insurance_max (float): Maximum insurance rate.
+        - inactivity_min (float): Minimum inactivity rate.
+        - inactivity_max (float): Maximum inactivity rate.
+        - cigarette_min (float): Minimum cigarette use rate.
+        - cigarette_max (float): Maximum cigarette use rate.
+        - aqi_min (float): Minimum air quality index.
+        - aqi_max (float): Maximum air quality index.
+        - co2_min (float): Minimum CO2 emissions.
+        - co2_max (float): Maximum CO2 emissions.
 
     Returns:
-        list of dict: Each dictionary contains state metadata, demographic data,
-                      cancer data, and socioeconomic data.
+        str: The fully constructed SQL query as a string.
     """
     query = """
         SELECT 
@@ -37,89 +53,69 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
             e.air_quality_index,
             e.co2_emissions
         FROM states s
+        LEFT JOIN cancer_data c ON s.id = c.state_id
+    """
+    params = []
+
+    # Build filtering conditions dynamically for cancer_data before the join to execute the query faster These conditions are applied in the ON clause of the LEFT JOIN to filter rows early, reducing the number of rows processed in the join.
+    if cancer_type != "-":
+        query += f" AND c.cancer_type_id = {int(cancer_type)}"
+    if year != "-":
+        query += f" AND c.year = {int(year)}"
+    if is_female != "-":
+        query += f" AND c.is_female = {int(is_female)}"
+    if is_alive != "-":
+        query += f" AND c.is_alive = {int(is_alive)}"
+    if race_id != "-":
+        query += f" AND c.race_id = {int(race_id)}"
+
+
+    # Add remaining joins to include related data from demographics, socioeconomic, risk factors, and environmental tables.
+    query += """
         LEFT JOIN demographics d ON s.id = d.state_id
-        LEFT JOIN cancer_data c ON d.state_id = c.state_id
         LEFT JOIN socioeconomic_data sd ON s.id = sd.state_id
         LEFT JOIN risk_factors rf ON s.id = rf.state_id
         LEFT JOIN environmental e ON s.id = e.state_id
         WHERE 1=1
     """
 
-    params = []
-
-    # Add filters dynamically
-    if cancer_type != "-":
-        query += " AND c.site_id = %s"
-        params.append(int(cancer_type))
-    if year != "-":
-        query += " AND c.year = %s"
-        params.append(int(year))
-    if is_female != "-":
-        query += " AND c.is_female = %s"
-        params.append(int(is_female))
-    if is_alive != "-":
-        query += " AND c.is_alive = %s"
-        params.append(int(is_alive))
-    if race_id != "-":
-        query += " AND c.race_id = %s"
-        params.append(int(race_id))
-
-    # Add unemployment rate filter
+    # Add filters for socioeconomic factors
     if unemployement_min is not None:
-        query += " AND sd.unemployment_rate >= %s"
-        params.append(unemployement_min)
+        query += f" AND sd.unemployment_rate >= {unemployement_min}"
     if unemployement_max is not None:
-        query += " AND sd.unemployment_rate <= %s"
-        params.append(unemployement_max)
+        query += f" AND sd.unemployment_rate <= {unemployement_max}"
 
-    # Add median income filter
     if median_min is not None:
-        query += " AND sd.median_income >= %s"
-        params.append(median_min)
+        query += f" AND sd.median_income >= {median_min}"
     if median_max is not None:
-        query += " AND sd.median_income <= %s"
-        params.append(median_max)
+        query += f" AND sd.median_income <= {median_max}"
 
-    # Add insurance rate filter
     if insurance_min is not None:
-        query += " AND sd.insurance_rate >= %s"
-        params.append(insurance_min)
+        query += f" AND sd.insurance_rate >= {insurance_min}"
     if insurance_max is not None:
-        query += " AND sd.insurance_rate <= %s"
-        params.append(insurance_max)
+        query += f" AND sd.insurance_rate <= {insurance_max}"
 
-    # Add inactivity rate filter
+    # Add filters for risk factors
     if inactivity_min is not None:
-        query += " AND rf.inactivity_rate >= %s"
-        params.append(inactivity_min)
+        query += f" AND rf.inactivity_rate >= {inactivity_min}"
     if inactivity_max is not None:
-        query += " AND rf.inactivity_rate <= %s"
-        params.append(inactivity_max)
+        query += f" AND rf.inactivity_rate <= {inactivity_max}"
 
-    # Add cigarette use rate filter
     if cigarette_min is not None:
-        query += " AND rf.cigarette_use_rate >= %s"
-        params.append(cigarette_min)
+        query += f" AND rf.cigarette_use_rate >= {cigarette_min}"
     if cigarette_max is not None:
-        query += " AND rf.cigarette_use_rate <= %s"
-        params.append(cigarette_max)
+        query += f" AND rf.cigarette_use_rate <= {cigarette_max}"
 
-    # Add air quality filter
+    # Add filters for environmental factors
     if aqi_min is not None:
-        query += " AND e.air_quality_index >= %s"
-        params.append(aqi_min)
+        query += f" AND e.air_quality_index >= {aqi_min}"
     if aqi_max is not None:
-        query += " AND e.air_quality_index <= %s"
-        params.append(aqi_max)
+        query += f" AND e.air_quality_index <= {aqi_max}"
 
-    # Add co2 filter
     if co2_min is not None:
-        query += " AND e.co2_emissions >= %s"
-        params.append(co2_min)
+        query += f" AND e.co2_emissions >= {co2_min}"
     if co2_max is not None:
-        query += " AND e.co2_emissions <= %s"
-        params.append(co2_max)
-
+        query += f" AND e.co2_emissions <= {co2_max}"
 
     query += """
         GROUP BY 
@@ -138,13 +134,11 @@ def fetch_heatmap_data(cursor, cancer_type, year, is_female, is_alive, race_id, 
             e.co2_emissions;
     """
 
-    # Execute the query
-    cursor.execute(query, params)
-    return cursor.fetchall()
+    return query
 
 
-def fetch_sites(cursor):
-    query = "SELECT id, name FROM sites ORDER BY name;"
+def fetch_cancer_types(cursor):
+    query = "SELECT id, name FROM cancer_types ORDER BY name;"
     cursor.execute(query)
     return cursor.fetchall()
 

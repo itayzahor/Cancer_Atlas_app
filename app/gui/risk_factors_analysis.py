@@ -12,7 +12,7 @@ risk_factors_analysis_bp = Blueprint('risk_factors_analysis', __name__, template
 def risk_factors_analysis():
     # Fetch options for dropdowns
     conn, cursor = get_db_connection()
-    cancer_types = fetch_sites(cursor)
+    cancer_types = fetch_cancer_types(cursor)
     cursor.close()
     conn.close()
 

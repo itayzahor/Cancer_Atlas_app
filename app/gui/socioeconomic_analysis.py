@@ -13,7 +13,7 @@ def socioeconomic_analysis():
 
     # Get database connection and cursor
     conn, cursor = get_db_connection()
-    cancer_types = fetch_sites(cursor)
+    cancer_types = fetch_cancer_types(cursor)
     cursor.close()
     conn.close()
 

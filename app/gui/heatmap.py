@@ -99,7 +99,7 @@ def heatmap():
 
     # Fetch options for dropdowns
     conn, cursor = get_db_connection()
-    cancer_types = fetch_sites(cursor)
+    cancer_types = fetch_cancer_types(cursor)
     races = fetch_races(cursor)
     years = fetch_years(cursor)
     cursor.close()
@@ -148,14 +148,18 @@ def heatmap():
     race_id = int(race_id) if race_id != "-" else "-"
     year = int(year) if year != "-" else "-"
 
+    conn, cursor = get_db_connection()
     try:
-        conn, cursor = get_db_connection()
-        data = fetch_heatmap_data(
-            cursor, cancer_type, year, is_female, is_alive, race_id,
+        # Construct the query dynamically
+        query = construct_heatmap_query(
+            cancer_type, year, is_female, is_alive, race_id,
             unemployement_min, unemployement_max, median_min, median_max,
             insurance_min, insurance_max, inactivity_min, inactivity_max,
-            cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max)
-        
+            cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max
+        )
+        # Execute the query
+        cursor.execute(query)
+        data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
         data = []  # Fallback to empty data

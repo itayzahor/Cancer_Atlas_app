@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, session
 from ..db.db_connector import get_db_connection
-from ..db.queries import fetch_sites  
+from ..db.queries import fetch_cancer_types  
 from ..db.insights_queries import *
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,7 +12,7 @@ environmental_analysis_bp = Blueprint('environmental_analysis', __name__, templa
 def environmental_analysis():
     # Fetch options for cancer type dropdown
     conn, cursor = get_db_connection()
-    cancer_types = fetch_sites(cursor)
+    cancer_types = fetch_cancer_types(cursor)
     cursor.close()
     conn.close()
 
