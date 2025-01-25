@@ -10,25 +10,33 @@ risk_factors_analysis_bp = Blueprint('risk_factors_analysis', __name__, template
 
 @risk_factors_analysis_bp.route('/', methods=['GET', 'POST'])
 def risk_factors_analysis():
-    # Fetch options for dropdowns
-    conn, cursor = get_db_connection()
-    cancer_types = fetch_sites(cursor)
-    cursor.close()
-    conn.close()
+    # Fetch options for cancer type dropdown
+    cancer_types = []
+    try:
+        conn, cursor = get_db_connection()
+        cursor.execute(fetch_cancer_types_query())
+        cancer_types = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching cancer types: {e}")
+        cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+    finally:
+        cursor.close()
+        conn.close()
 
     # Get user inputs
     cancer_type = request.args.get('cancer_type', "-")
     factor = request.args.get('factor', "cigarette_use_rate")  # Default to cigarette use rate
 
     # Fetch data for the selected cancer type and factor
-    conn, cursor = get_db_connection()
+    data = []
     try:
+        conn, cursor = get_db_connection()
         query = risk_factors_vs_incidence(cancer_type, factor)
         cursor.execute(query)
         data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
-        data = []  # Fallback to empty data
+        data = [{'error': f"Failed to fetch data for {factor}. Please try again later."}]
     finally:
         cursor.close()
         conn.close()
@@ -65,6 +73,6 @@ def risk_factors_analysis():
         plot_html=scatter_plot.to_html(full_html=False),
         data=data,
         cancer_types=cancer_types,
-        selected_cancer_type=cancer_type,
+        cancer_type=cancer_type,
         selected_factor=factor
     )

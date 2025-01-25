@@ -16,10 +16,10 @@
         <label for="cancer_type">Select Cancer Type:</label>
         <select id="cancer_type" name="cancer_type">
             <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
-            {% for site in cancer_types %}
-            <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
-                {{ site['name'] }}
-            </option>
+            {% for type in cancer_types %}
+                <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
+                    {{ type['name'] }}
+                </option>
             {% endfor %}
         </select>
 
