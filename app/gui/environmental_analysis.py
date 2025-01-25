@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, session
 from ..db.db_connector import get_db_connection
-from ..db.queries import fetch_cancer_types  
+from ..db.queries import *  
 from ..db.insights_queries import *
 import pandas as pd
 import plotly.graph_objects as go
@@ -11,24 +11,35 @@ environmental_analysis_bp = Blueprint('environmental_analysis', __name__, templa
 @environmental_analysis_bp.route('/', methods=['GET', 'POST'])
 def environmental_analysis():
     # Fetch options for cancer type dropdown
-    conn, cursor = get_db_connection()
-    cancer_types = fetch_cancer_types(cursor)
-    cursor.close()
-    conn.close()
+    cancer_types = []
+    try:
+        conn, cursor = get_db_connection()
+        cursor.execute(fetch_cancer_types_query())
+        cancer_types = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching cancer types: {e}")
+        # Log the error and potentially return a default value or error flag
+        cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+    finally:
+        cursor.close()
+        conn.close()
+
 
     # Get user inputs
     cancer_type = request.args.get('cancer_type', "-")
     factor = request.args.get('factor', "air_quality_index")  # Default to air quality index
 
     # Fetch data for the selected cancer type and factor
-    conn, cursor = get_db_connection()
+    data = []
     try:
+        conn, cursor = get_db_connection()
         query = environmental_vs_incidence(cancer_type, factor)
         cursor.execute(query)
         data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
-        data = []
+        # Return a flag or meaningful error message
+        data = [{'error': f"Failed to fetch data for {factor}. Please try again later."}]
     finally:
         cursor.close()
         conn.close()
@@ -65,6 +76,6 @@ def environmental_analysis():
         plot_html=scatter_plot.to_html(full_html=False),
         data=data,
         cancer_types=cancer_types,
-        selected_cancer_type=cancer_type,
+        cancer_type=cancer_type,
         selected_factor=factor
     )

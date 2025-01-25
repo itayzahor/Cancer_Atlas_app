@@ -11,25 +11,33 @@ socioeconomic_analysis_bp = Blueprint('socioeconomic_analysis', __name__, templa
 @socioeconomic_analysis_bp.route('/', methods=['GET', 'POST'])
 def socioeconomic_analysis():
 
-    # Get database connection and cursor
-    conn, cursor = get_db_connection()
-    cancer_types = fetch_cancer_types(cursor)
-    cursor.close()
-    conn.close()
+    # Fetch options for cancer type dropdown
+    cancer_types = []
+    try:
+        conn, cursor = get_db_connection()
+        cursor.execute(fetch_cancer_types_query())
+        cancer_types = cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching cancer types: {e}")
+        cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+    finally:
+        cursor.close()
+        conn.close()
 
     # Get user inputs
     cancer_type = request.args.get('cancer_type', "-")
     factor = request.args.get('factor', "median_income")  # Default to median_income
 
-   # Fetch data based on user inputs
-    conn, cursor = get_db_connection()
+   # Fetch data for the selected cancer type and factor
+    data = []
     try:
+        conn, cursor = get_db_connection()
         query = socioeconomic_vs_mortality(cancer_type, factor)
         cursor.execute(query)
         data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
-        data = []  # Fallback to empty data
+        data = [{'error': f"Failed to fetch data for {factor}. Please try again later."}]
     finally:
         cursor.close()
         conn.close()

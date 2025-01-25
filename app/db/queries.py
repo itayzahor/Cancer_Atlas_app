@@ -4,59 +4,51 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
                             inactivity_min, inactivity_max, cigarette_min,
                             cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
     """
-    Constructs the heatmap query dynamically with the given filters.
+    Constructs the heatmap SQL query dynamically with the given filters.
 
     Args:
-        cursor: Database cursor for executing queries.
-
-    Fields for Filtering:
-        - cancer_type (str): ID of the cancer type to filter by. Use "-" for no filter.
-        - year (str): Year to filter by. Use "-" for no filter.
-        - is_female (str): Filter by gender (1 for female, 0 for male). Use "-" for no filter.
-        - is_alive (str): Filter by survival status (1 for alive, 0 for deceased). Use "-" for no filter.
-        - race_id (str): ID of the race to filter by. Use "-" for no filter.
-        - unemployement_min (float): Minimum unemployment rate.
-        - unemployement_max (float): Maximum unemployment rate.
-        - median_min (int): Minimum median income.
-        - median_max (int): Maximum median income.
-        - insurance_min (float): Minimum insurance rate.
-        - insurance_max (float): Maximum insurance rate.
-        - inactivity_min (float): Minimum inactivity rate.
-        - inactivity_max (float): Maximum inactivity rate.
-        - cigarette_min (float): Minimum cigarette use rate.
-        - cigarette_max (float): Maximum cigarette use rate.
-        - aqi_min (float): Minimum air quality index.
-        - aqi_max (float): Maximum air quality index.
-        - co2_min (float): Minimum CO2 emissions.
-        - co2_max (float): Maximum CO2 emissions.
+        cancer_type: Filter for cancer type.
+        year: Year to filter by.
+        is_female: Gender filter.
+        is_alive: Survival status filter.
+        race_id: Race filter.
+        unemployement_min, unemployement_max: Range for unemployment rate.
+        median_min, median_max: Range for median income.
+        insurance_min, insurance_max: Range for insurance rate.
+        inactivity_min, inactivity_max: Range for inactivity rate.
+        cigarette_min, cigarette_max: Range for cigarette use rate.
+        aqi_min, aqi_max: Range for air quality index.
+        co2_min, co2_max: Range for CO2 emissions.
 
     Returns:
-        str: The fully constructed SQL query as a string.
+        str: The fully constructed SQL query as a string, including:
+             - Filtered population
+             - Calculated cancer rates
+             - Normalized rates for easier comparison
     """
-    query = """
-        SELECT 
-            s.name,
-            s.abbreviation,
-            s.latitude,
-            s.longitude,
-            COALESCE(SUM(c.count), 0) AS total_count,
-            d.total_population,
-            d.male_population,
-            d.female_population,
-            d.white_population,
-            d.black_population,
-            d.asian_population,
-            d.hispanic_population,
-            d.native_pacific_population,
-            sd.unemployment_rate,
-            sd.median_income,
-            e.air_quality_index,
-            e.co2_emissions
-        FROM states s
-        LEFT JOIN cancer_data c ON s.id = c.state_id
+    query = f"""
+        WITH base_data AS (
+            SELECT 
+                s.name,
+                s.abbreviation,
+                s.latitude,
+                s.longitude,
+                COALESCE(SUM(c.count), 0) AS total_count,
+                d.total_population,
+                d.male_population,
+                d.female_population,
+                d.white_population,
+                d.black_population,
+                d.asian_population,
+                d.hispanic_population,
+                d.native_pacific_population,
+                sd.unemployment_rate,
+                sd.median_income,
+                e.air_quality_index,
+                e.co2_emissions
+            FROM states s
+            LEFT JOIN cancer_data c ON s.id = c.state_id
     """
-    params = []
-
     # Build filtering conditions dynamically for cancer_data before the join to execute the query faster These conditions are applied in the ON clause of the LEFT JOIN to filter rows early, reducing the number of rows processed in the join.
     if cancer_type != "-":
         query += f" AND c.cancer_type_id = {int(cancer_type)}"
@@ -131,27 +123,87 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
             sd.unemployment_rate,
             sd.median_income,
             e.air_quality_index,
-            e.co2_emissions;
+            e.co2_emissions
+        )
+        """
+    query += """
+        , final_data AS (
+            SELECT 
+                base_data.*,
     """
 
+    # Add filtered population logic dynamically
+    if race_id == 1:
+        race_population = "base_data.native_pacific_population"
+    elif race_id == 2:
+        race_population = "base_data.black_population"
+    elif race_id == 3:
+        race_population = "base_data.hispanic_population"
+    elif race_id == 4:
+        race_population = "base_data.asian_population"
+    elif race_id == 5:
+        race_population = "base_data.white_population"
+    else:
+        race_population = "base_data.total_population"
+
+    # Add gender-specific adjustments dynamically
+    if is_female == "1":
+        filtered_population = f"{race_population} * (base_data.female_population / NULLIF(base_data.total_population, 0))"
+    elif is_female == "0":
+        filtered_population = f"{race_population} * (base_data.male_population / NULLIF(base_data.total_population, 0))"
+    else:
+        filtered_population = race_population
+
+    # Add filtered_population and rate calculations to the query
+    # When calculating the rate, we check for division by zero to avoid errors
+    # We also round the rate to 2 decimal places
+    query += f"""
+        {filtered_population} AS filtered_population,
+        ROUND(
+            CASE 
+                WHEN total_count > 0 AND {filtered_population} > 0 THEN 
+                    (total_count / {filtered_population}) * 100
+                ELSE 0
+            END, 2
+        ) AS rate
+        FROM base_data
+        )
+    """
+
+    # Add the normalized rates
+    query += """
+        SELECT 
+            final_data.*,
+            CASE 
+                WHEN rate_bounds.max_rate > rate_bounds.min_rate THEN 
+                    (final_data.rate - rate_bounds.min_rate) / (rate_bounds.max_rate - rate_bounds.min_rate)
+                ELSE 0
+            END AS normalized_rate
+        FROM final_data,
+            (SELECT MIN(rate) AS min_rate, MAX(rate) AS max_rate FROM final_data) AS rate_bounds;
+    """
     return query
 
 
-def fetch_cancer_types(cursor):
-    query = "SELECT id, name FROM cancer_types ORDER BY name;"
-    cursor.execute(query)
-    return cursor.fetchall()
+def fetch_cancer_types_query():
+    """
+    Returns the SQL query to fetch cancer types.
+    """
+    return "SELECT id, name FROM cancer_types ORDER BY name;"
 
 
-def fetch_races(cursor):
-    query = "SELECT id, name FROM races ORDER BY name;"
-    cursor.execute(query)
-    return cursor.fetchall()
+def fetch_races_query():
+    """
+    Returns the SQL query to fetch races.
+    """
+    return "SELECT id, name FROM races ORDER BY name;"
 
-def fetch_years(cursor):
-    query = "SELECT DISTINCT year FROM cancer_data ORDER BY year;"
-    cursor.execute(query)
-    return [row['year'] for row in cursor.fetchall()]
+
+def fetch_years_query():
+    """
+    Returns the SQL query to fetch distinct years from cancer_data.
+    """
+    return "SELECT DISTINCT year FROM cancer_data ORDER BY year;"
 
 
 

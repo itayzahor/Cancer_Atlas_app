@@ -54,7 +54,7 @@ def risk_factors_vs_incidence(cancer_type, factor):
              JOIN 
                 demographics d ON c.state_id = d.state_id
              WHERE 
-                c.is_alive = 1  -- Only incidence data
+                c.is_alive = 1
     """
     if cancer_type != "-":
         query += f" AND c.cancer_type_id = {int(cancer_type)}"

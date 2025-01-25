@@ -13,82 +13,6 @@ static_dir = os.path.join(base_dir, '../../static')
 heatmap_bp = Blueprint('heatmap', __name__, template_folder='../../templates', static_folder='../../static')
 
 
-def calculate_rates(data, filters):
-    """
-    Calculate rates (as percentages), normalized rates, and assign colors for the heatmap.
-
-    Args:
-        data (list of dict): Raw data from the query.
-        filters (dict): User-selected filters (e.g., gender_id, race_id).
-
-    Returns:
-        list of dict: Data with additional columns for filtered population, rates, normalized rates, and colors.
-    """
-    rates = []
-    min_rate, max_rate = float('inf'), float('-inf')
-
-    for row in data:
-        # Convert populations to floats for safe division
-        total_population = float(row['total_population'])
-        female_population = float(row['female_population'])
-        male_population = float(row['male_population'])
-        race_population = 0
-
-        # Determine the race-specific population
-        if filters['race_id'] == 1:  
-            race_population = float(row.get('native_pacific_population', 0))
-        elif filters['race_id'] == 2:  
-            race_population = float(row.get('black_population', 0))
-        elif filters['race_id'] == 3: 
-            race_population = float(row.get('hispanic_population', 0))
-        elif filters['race_id'] == 4:  
-            race_population = float(row.get('asian_population', 0))
-        elif filters['race_id'] == 5: 
-            race_population = float(row.get('white_population', 0))
-        else:  # All races
-            race_population = total_population
-
-        # Combine race population with gender-specific population
-        if filters['gender_id'] == "1":  # Female
-            filtered_population = race_population * (female_population / total_population)
-        elif filters['gender_id'] == "0":  # Male
-            filtered_population = race_population * (male_population / total_population)
-        else:  # All genders
-            filtered_population = race_population
-
-        # Round the filtered population to avoid decimals
-        filtered_population = round(filtered_population)
-
-        # Add the filtered population to the row
-        row['filtered_population'] = filtered_population
-
-        if row['total_count'] > 0 and filtered_population > 0:
-            rate = (row['total_count'] / filtered_population) * 100
-            min_rate = min(min_rate, rate)
-            max_rate = max(max_rate, rate)
-        else:
-            rate = 0
-
-
-        # Append the rate to the row
-        row['rate'] = round(rate, 2)
-        rates.append(row)
-
-    # Round min_rate and max_rate to 2 decimal places for consistency
-    min_rate = round(min_rate, 2)
-    max_rate = round(max_rate, 2)
-
-
-    # Normalize rates (0–1) and assign colors
-    for row in rates:
-        if max_rate > min_rate and row['total_count'] > 0:  # Avoid division by zero
-            row['normalized_rate'] = round(
-            (row['rate'] - min_rate) / (max_rate - min_rate), 2)
-        else:
-            row['normalized_rate'] = 0
-
-    return rates
-
 @heatmap_bp.route('/', methods=['GET'])
 def heatmap():
     show_advanced = request.args.get('show_advanced', 'false')
@@ -98,12 +22,26 @@ def heatmap():
     heatmap_html = None
 
     # Fetch options for dropdowns
-    conn, cursor = get_db_connection()
-    cancer_types = fetch_cancer_types(cursor)
-    races = fetch_races(cursor)
-    years = fetch_years(cursor)
-    cursor.close()
-    conn.close()
+    cancer_types, races, years = [], [], []
+    try:
+        conn, cursor = get_db_connection()
+        
+        cursor.execute(fetch_cancer_types_query())
+        cancer_types = cursor.fetchall()
+
+        cursor.execute(fetch_races_query())
+        races = cursor.fetchall()
+
+        cursor.execute(fetch_years_query())
+        years = [row['year'] for row in cursor.fetchall()]
+    except Exception as e:
+        print(f"Error fetching dropdown options: {e}")
+        cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+        races = [{'id': '-', 'name': 'Error fetching data'}]
+        years = [{'year': '-', 'name': 'Error fetching data'}]
+    finally:
+        cursor.close()
+        conn.close()
 
     # Get user inputs from the query string
     cancer_type = request.args.get('cancer_type', "-")
@@ -148,8 +86,10 @@ def heatmap():
     race_id = int(race_id) if race_id != "-" else "-"
     year = int(year) if year != "-" else "-"
 
-    conn, cursor = get_db_connection()
+    # Fetch data for the heatmap
+    data = []
     try:
+        conn, cursor = get_db_connection()
         # Construct the query dynamically
         query = construct_heatmap_query(
             cancer_type, year, is_female, is_alive, race_id,
@@ -162,19 +102,12 @@ def heatmap():
         data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
-        data = []  # Fallback to empty data
+        data = [{'error': 'Failed to fetch heatmap data. Please try again later.'}]
     finally:
         cursor.close()
         conn.close()
 
-    # Apply rate calculations
-    filters = {
-        "gender_id": is_female,
-        "race_id": race_id,
-    }
-    data = calculate_rates(data, filters)
-
-            
+    
 
     if data:
         # Calculate statistics
@@ -184,7 +117,11 @@ def heatmap():
 
         highest_rate = max(data, key=lambda row: row['rate'])
         lowest_rate = min(data, key=lambda row: row['rate'])
-
+        print("Total cases:", total_cases)
+        print("Total rates:", total_rates)
+        print("Average rate:", avg_rate)
+        print("Highest rate:", highest_rate) 
+        print("Lowest rate:", lowest_rate)   
         stats = {
             'total_cases': total_cases,
             'avg_rate': avg_rate,
