@@ -3,3 +3,7 @@ venv/
 flask_session/
 
 app/db/db_connector.py
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
