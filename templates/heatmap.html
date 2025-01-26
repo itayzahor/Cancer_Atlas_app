@@ -1,58 +1,280 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Cancer Heatmap</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='insights.css') }}">
-</head>
-<body>
-    <h1>Cancer Atlas</h1>
+{% extends "base.html" %}
 
-    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+{% block title %}Cancer Atlas - Heatmap{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/heatmap.css') }}">
+<style>
+    .form-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .advanced-filters-group {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .filter-pair {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-pair .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+
+    .buttons-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-top: 1px solid #dee2e6;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 class="mb-4">Cancer Distribution Heatmap</h1>
     
-    <!-- Include the form -->
-    {% include "form.html" %}
-    
+    <!-- Form Section -->
+    <div class="form-section">
+        <form method="GET" action="{{ url_for('heatmap.heatmap') }}">
+            <!-- Primary Filters -->
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="cancer_type" class="form-label">Cancer Type</label>
+                        <select id="cancer_type" name="cancer_type" class="form-select">
+                            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+                            {% for site in cancer_types %}
+                            <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
+                                {{ site['name'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="year" class="form-label">Year</label>
+                        <select id="year" name="year" class="form-select">
+                            <option value="-" {% if year == "-" %}selected{% endif %}>All Years</option>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="is_female" class="form-label">Gender</label>
+                        <select id="is_female" name="is_female" class="form-select">
+                            <option value="-" {% if is_female == "-" %}selected{% endif %}>All Genders</option>
+                            <option value="1" {% if is_female == "1" %}selected{% endif %}>Female</option>
+                            <option value="0" {% if is_female == "0" %}selected{% endif %}>Male</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-    
-    <!-- Flexbox Container for Heatmap and Analysis -->
-    <div class="content">
-        <!-- Heatmap Section -->
-        {% if not data %}
-        <p>No data available for the selected filters. Please adjust your filters and try again.</p>
-        {% else %}
-        <!-- Existing heatmap and stats display -->
-        <div id="heatmap">
-            {{ heatmap_html | safe }}
-        </div>
-        {% endif %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="is_alive" class="form-label">Case Type</label>
+                        <select id="is_alive" name="is_alive" class="form-select">
+                            <option value="-" {% if is_alive == "-" %}selected{% endif %}>All Cases</option>
+                            <option value="1" {% if is_alive == "1" %}selected{% endif %}>New Cancer Cases</option>
+                            <option value="0" {% if is_alive == "0" %}selected{% endif %}>Cancer-Related Deaths</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="race_id" class="form-label">Race</label>
+                        <select id="race_id" name="race_id" class="form-select">
+                            <option value="-" {% if race_id == "-" %}selected{% endif %}>All Races</option>
+                            {% for race in races %}
+                            <option value="{{ race['id'] }}" {% if race['id']|int == race_id|int %}selected{% endif %}>
+                                {{ race['name'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-       <!-- Statistics Section -->
-        {% include "statistics.html" %}
+            <!-- Advanced Filters Section -->
+            <div id="advanced-filters" class="advanced-filters-group" style="display: none;">
+                <h5 class="mb-3">Socioeconomic Filters</h5>
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="unemployement_min" class="form-label">Unemployment Rate Min (%)</label>
+                        <input type="number" step="0.1" id="unemployement_min" name="unemployement_min" class="form-control" value="{{ unemployement_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="unemployement_max" class="form-label">Max (%)</label>
+                        <input type="number" step="0.1" id="unemployement_max" name="unemployement_max" class="form-control" value="{{ unemployement_max }}">
+                    </div>
+                </div>
 
-        <!-- Analysis Text Section -->
-        <div class="text-section">
-            <h2>About the Heatmap</h2>
-            <p>
-                This heatmap visualizes cancer cases across the U.S., integrating demographics, socioeconomic factors, behavioral risk factors, and environmental data. Users can apply filters for gender, race, socioeconomic factors, or risk factors to explore detailed trends.
-            </p>
-            <p>
-                Cancer rates are dynamically calculated based on the selected filters, adjusting the population base accordingly. For example, selecting "Female" and "Asian" uses only the female Asian population for each state. 
-            </p>
-            <p>
-                The normalized rate for each state is calculated using the formula:
-                <code>Normalized Rate = (Rate - Min Rate) / (Max Rate - Min Rate)</code>. 
-                This ensures that the color intensity in the heatmap consistently reflects relative differences in cancer rates across states, highlighting areas of concern effectively.
-            </p>
-            <p>
-                By combining demographic adjustments with socioeconomic, behavioral, and environmental data, the heatmap offers a comprehensive view of health disparities. This visualization helps identify at-risk populations and regions, supporting more targeted and equitable public health initiatives.
-            </p>
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="median_min" class="form-label">Median Income Min ($)</label>
+                        <input type="number" id="median_min" name="median_min" class="form-control" value="{{ median_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="median_max" class="form-label">Max ($)</label>
+                        <input type="number" id="median_max" name="median_max" class="form-control" value="{{ median_max }}">
+                    </div>
+                </div>
+
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="insurance_min" class="form-label">Insurance Coverage Min (%)</label>
+                        <input type="number" step="0.1" id="insurance_min" name="insurance_min" class="form-control" value="{{ insurance_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="insurance_max" class="form-label">Max (%)</label>
+                        <input type="number" step="0.1" id="insurance_max" name="insurance_max" class="form-control" value="{{ insurance_max }}">
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4">Risk Factors</h5>
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="inactivity_min" class="form-label">Physical Inactivity Min (%)</label>
+                        <input type="number" step="0.1" id="inactivity_min" name="inactivity_min" class="form-control" value="{{ inactivity_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="inactivity_max" class="form-label">Max (%)</label>
+                        <input type="number" step="0.1" id="inactivity_max" name="inactivity_max" class="form-control" value="{{ inactivity_max }}">
+                    </div>
+                </div>
+
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="cigarette_min" class="form-label">Cigarette Use Min (%)</label>
+                        <input type="number" step="0.1" id="cigarette_min" name="cigarette_min" class="form-control" value="{{ cigarette_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="cigarette_max" class="form-label">Max (%)</label>
+                        <input type="number" step="0.1" id="cigarette_max" name="cigarette_max" class="form-control" value="{{ cigarette_max }}">
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4">Environmental Factors</h5>
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="aqi_min" class="form-label">Air Quality Index Min</label>
+                        <input type="number" id="aqi_min" name="aqi_min" class="form-control" value="{{ aqi_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="aqi_max" class="form-label">Max</label>
+                        <input type="number" id="aqi_max" name="aqi_max" class="form-control" value="{{ aqi_max }}">
+                    </div>
+                </div>
+
+                <div class="filter-pair">
+                    <div class="form-group">
+                        <label for="co2_min" class="form-label">CO₂ Emissions Min</label>
+                        <input type="number" id="co2_min" name="co2_min" class="form-control" value="{{ co2_min }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="co2_max" class="form-label">Max</label>
+                        <input type="number" id="co2_max" name="co2_max" class="form-control" value="{{ co2_max }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons Row -->
+            <div class="buttons-row">
+                <button type="button" class="btn btn-outline-secondary" id="toggle-advanced-filters">
+                    <i class="fas fa-sliders-h me-2"></i>Advanced Filters
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sync-alt me-2"></i>Update Heatmap
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
-    <!-- Display results if data is available -->
-    <a href="{{ url_for('utilities.download_csv', data_key='heatmap_data') }}" class="btn-download-csv">
-        Download Heatmap Data
-    </a>    
-</body>
-</html>
+    <!-- Heatmap Section -->
+    <div class="visualization-container">
+        {% if not data %}
+            <div class="alert alert-info">
+                No data available for the selected filters. Please adjust your filters and try again.
+            </div>
+        {% else %}
+            <div id="heatmap">
+                {{ heatmap_html | safe }}
+            </div>
+        {% endif %}
+    </div>
+    <!-- Statistics Section -->
+    {% include "statistics.html" %}
+
+    <!-- Analysis Section -->
+    <div class="analysis-section">
+        <h2>About the Heatmap</h2>
+        <p>This heatmap visualizes cancer cases across the U.S., integrating demographics, socioeconomic factors, behavioral risk factors, and environmental data.</p>
+        <p>
+            Cancer rates are dynamically calculated based on the selected filters, adjusting the population base accordingly. For example, selecting "Female" and "Asian" uses only the female Asian population for each state. 
+        </p>
+        <p>
+            The normalized rate for each state is calculated using the formula:
+            <code>Normalized Rate = (Rate - Min Rate) / (Max Rate - Min Rate)</code>. 
+            This ensures that the color intensity in the heatmap consistently reflects relative differences in cancer rates across states, highlighting areas of concern effectively.
+        </p>
+        <p>
+            By combining demographic adjustments with socioeconomic, behavioral, and environmental data, the heatmap offers a comprehensive view of health disparities. This visualization helps identify at-risk populations and regions, supporting more targeted and equitable public health initiatives.
+        </p>
+    </div>
+
+    <!-- Download Button -->
+    <a href="{{ url_for('utilities.download_csv', data_key='heatmap_data') }}" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Data
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/heatmap.js') }}"></script>
+<script>
+    document.getElementById('toggle-advanced-filters').addEventListener('click', function() {
+        const advancedFilters = document.getElementById('advanced-filters');
+        if (advancedFilters.style.display === 'none' || advancedFilters.style.display === '') {
+            advancedFilters.style.display = 'block';
+            this.textContent = 'Hide Advanced Filters';
+        } else {
+            advancedFilters.style.display = 'none';
+            this.textContent = 'Show Advanced Filters';
+        }
+    });
+</script>
+{% endblock %}

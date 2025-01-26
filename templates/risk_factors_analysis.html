@@ -1,78 +1,107 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Risk Factors vs Cancer Incidence</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='shared.css') }}">
-</head>
-<body>
-    <h1>Risk Factors vs Cancer Incidence</h1>
+{% extends "base.html" %}
 
-    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+{% block title %}Cancer Atlas - Risk Factors Analysis{% endblock %}
 
+{% block content %}
+<div class="content-section">
+    <div class="section-header">
+        <h1 class="mb-4">Risk Factors Analysis</h1>
+        <p class="lead">Analyze the relationship between behavioral risk factors and cancer incidence rates.</p>
+    </div>
 
-    <!-- Form Section -->
-    <form method="GET" action="/risk_factors_analysis" class="form-section">
-        <label for="cancer_type">Select Cancer Type:</label>
-        <select id="cancer_type" name="cancer_type">
-            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
-            {% for type in cancer_types %}
-                <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
-                    {{ type['name'] }}
-                </option>
-            {% endfor %}
-        </select>
+    <div class="analysis-controls">
+        <form method="GET" action="{{ url_for('risk_factors_analysis.risk_factors_analysis') }}" class="form-section">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="cancer_type" class="form-label">Cancer Type</label>
+                    <select id="cancer_type" name="cancer_type" class="form-select">
+                        <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+                        {% for type in cancer_types %}
+                            <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
+                                {{ type['name'] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="factor" class="form-label">Risk Factor</label>
+                    <select id="factor" name="factor" class="form-select">
+                        <option value="cigarette_use_rate" {% if selected_factor == "cigarette_use_rate" %}selected{% endif %}>Cigarette Use Rate</option>
+                        <option value="inactivity_rate" {% if selected_factor == "inactivity_rate" %}selected{% endif %}>Physical Inactivity Rate</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Update Analysis</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
-        <label for="factor">Select Risk Factor:</label>
-        <select id="factor" name="factor">
-            <option value="cigarette_use_rate" {% if selected_factor == "cigarette_use_rate" %}selected{% endif %}>Smoking Rate</option>
-            <option value="inactivity_rate" {% if selected_factor == "inactivity_rate" %}selected{% endif %}>Inactivity Rate</option>
-        </select>
-
-        <button type="submit" class="btn-submit">Submit</button>
-    </form>
-
-
-    <!-- Flexbox Container for Plot and Analysis -->
-    <div class="content">
-        <!-- Scatter Plot Section -->
-        <div class="plot-section">
-            <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
+    <div class="visualization-container">
+        <div id="plot-wrapper">
             {{ plot_html | safe }}
-        </div>
-
-        <!-- Analysis Text Section -->
-        <div class="text-section">
-            <h2>About the Analysis</h2>
-            <p>
-                This analysis explores the relationship between selected behavioral risk factors 
-                (Cigarette Use Rate or Physical Inactivity Rate) and cancer incidence rates across 
-                states in the U.S. Users can further refine the analysis by selecting a specific 
-                cancer type or viewing data for all cancers.
-            </p>
-            <p>
-                Cancer incidence is measured as the number of newly diagnosed cases per 1,000 people, 
-                calculated using aggregated cancer data and normalized against state populations. 
-                This metric provides a standardized measure of the burden of new cancer cases in 
-                each state.
-            </p>
-            <p>
-                The scatter plot visualizes the relationship between the selected risk factor 
-                (x-axis) and cancer incidence rate (y-axis). Each point represents a state, and 
-                tooltips display the state name and corresponding data values. The plot allows 
-                users to observe patterns or trends that may indicate a correlation between 
-                behavioral risk factors and cancer incidence.
-            </p>
-            <p>
-                This insight highlights the potential impact of public health initiatives aimed 
-                at reducing behavioral risk factors to lower cancer incidence rates, offering 
-                valuable information for policy-making and health interventions.
-            </p>
         </div>
     </div>
 
-    <a href="{{ url_for('utilities.download_csv', data_key='risk_factors_data') }}" class="btn-download-csv">
-        Download Risk Factors Data
-    </a>
-    
-</body>
-</html>
+    <div class="analysis-section">
+        <h2>Risk Factor Insights</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="insight-card">
+                    <h3>Behavioral Patterns</h3>
+                    <ul>
+                        <li>Smoking prevalence impact</li>
+                        <li>Physical activity correlation</li>
+                        <li>Regional behavior variations</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card">
+                    <h3>Prevention Strategies</h3>
+                    <ul>
+                        <li>Public health interventions</li>
+                        <li>Lifestyle modification programs</li>
+                        <li>Community education initiatives</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .insight-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
+
+    .insight-card:hover {
+        transform: translateY(-5px);
+    }
+
+    #plot-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const plotWrapper = document.getElementById('plot-wrapper');
+
+    form.addEventListener('submit', function(e) {
+        plotWrapper.style.opacity = '0.5';
+        plotWrapper.style.pointerEvents = 'none';
+    });
+});
+</script>
+{% endblock %}

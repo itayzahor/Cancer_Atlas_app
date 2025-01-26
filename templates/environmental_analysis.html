@@ -1,77 +1,128 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Environmental Data vs Cancer Incidence</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='shared.css') }}">
-</head>
-<body>
-    <h1>Environmental Data vs Cancer Incidence</h1>
+{% extends "base.html" %}
 
-    <a href="{{ url_for('home.homepage') }}" class="btn-back-home">Back to Home</a>
+{% block title %}Cancer Atlas - Environmental Analysis{% endblock %}
 
+{% block content %}
+<div class="content-section">
+    <div class="section-header">
+        <h1 class="mb-4">Environmental Impact Analysis</h1>
+        <p class="lead">Explore the relationship between environmental factors and cancer incidence rates across states.</p>
+    </div>
 
-    <!-- Form Section -->
-    <form method="GET" action="/environmental_analysis" class="form-section">
-        <label for="cancer_type">Select Cancer Type:</label>
-        <select id="cancer_type" name="cancer_type">
-            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
-            {% for type in cancer_types %}
-                <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
-                    {{ type['name'] }}
-                </option>
-            {% endfor %}
-        </select>
+    <div class="analysis-controls">
+        <form method="GET" action="{{ url_for('environmental_analysis.environmental_analysis') }}" class="form-section">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="cancer_type" class="form-label">Cancer Type</label>
+                    <select id="cancer_type" name="cancer_type" class="form-select">
+                        <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
+                        {% for type in cancer_types %}
+                            <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
+                                {{ type['name'] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="factor" class="form-label">Environmental Factor</label>
+                    <select id="factor" name="factor" class="form-select">
+                        <option value="air_quality_index" {% if selected_factor == "air_quality_index" %}selected{% endif %}>Air Quality Index</option>
+                        <option value="co2_emissions" {% if selected_factor == "co2_emissions" %}selected{% endif %}>CO2 Emissions</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Update Analysis</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
-
-        <label for="factor">Select Environmental Factor:</label>
-        <select id="factor" name="factor">
-            <option value="air_quality_index" {% if selected_factor == "air_quality_index" %}selected{% endif %}>Air Quality Index</option>
-            <option value="co2_emissions" {% if selected_factor == "co2_emissions" %}selected{% endif %}>CO2 Emissions</option>
-        </select>
-
-        <button type="submit" class="btn-submit">Submit</button>
-    </form>
-
-    <!-- Flexbox Container for Plot and Analysis -->
-    <div class="content">
-        <!-- Scatter Plot Section -->
-        <div class="plot-section">
-            <h2>{{ selected_factor.replace("_", " ").title() }} vs Cancer Incidence Rate</h2>
+    <div class="visualization-container">
+        <div id="plot-wrapper">
             {{ plot_html | safe }}
-        </div>
-
-        <!-- Analysis Text Section -->
-        <div class="text-section">
-            <h2>About the Analysis</h2>
-            <p>
-                This analysis explores the relationship between selected environmental factors 
-                (Air Quality Index or CO2 Emissions) and cancer incidence rates across states 
-                in the U.S. Users can refine the analysis by selecting a specific cancer type 
-                or viewing data for all cancers combined.
-            </p>
-            <p>
-                Cancer incidence is measured as the number of newly diagnosed cases per 1,000 people, 
-                calculated using aggregated cancer data normalized against state populations. This 
-                provides a standardized view of the burden of new cancer cases in each state.
-            </p>
-            <p>
-                The scatter plot visualizes the relationship, with the selected environmental factor 
-                shown on the x-axis and the cancer incidence rate on the y-axis. Each point represents 
-                a state, and tooltips display the state name and corresponding data values. The plot 
-                allows users to observe trends or anomalies that may indicate correlations between 
-                environmental factors and cancer incidence.
-            </p>
-            <p>
-                This insight highlights the importance of environmental conditions in public health 
-                and cancer prevention, offering valuable information to guide sustainability policies 
-                and interventions aimed at improving community health outcomes.
-            </p>
         </div>
     </div>
 
-    <a href="{{ url_for('utilities.download_csv', data_key='environmental_data') }}" class="btn-download-csv">
-        Download Environmental Data
-    </a>
-    
-</body>
-</html>
+    <div class="analysis-section">
+        <h2>Analysis Insights</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="insight-card">
+                    <h3>Key Findings</h3>
+                    <ul>
+                        <li>Correlation between environmental factors and cancer rates</li>
+                        <li>Regional variations in environmental impact</li>
+                        <li>Temporal trends in environmental conditions</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="insight-card">
+                    <h3>Recommendations</h3>
+                    <ul>
+                        <li>Policy implications for environmental protection</li>
+                        <li>Public health interventions</li>
+                        <li>Areas for further research</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .section-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .analysis-controls {
+        margin-bottom: 2rem;
+    }
+
+    .visualization-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 2rem 0;
+    }
+
+    .insight-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        height: 100%;
+    }
+
+    .insight-card h3 {
+        color: #0d6efd;
+        margin-bottom: 1rem;
+    }
+
+    .insight-card ul {
+        padding-left: 1.2rem;
+    }
+
+    #plot-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const plotWrapper = document.getElementById('plot-wrapper');
+
+    form.addEventListener('submit', function(e) {
+        plotWrapper.style.opacity = '0.5';
+        plotWrapper.style.pointerEvents = 'none';
+    });
+});
+</script>
+{% endblock %}
