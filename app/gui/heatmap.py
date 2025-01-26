@@ -117,11 +117,7 @@ def heatmap():
 
         highest_rate = max(data, key=lambda row: row['rate'])
         lowest_rate = min(data, key=lambda row: row['rate'])
-        print("Total cases:", total_cases)
-        print("Total rates:", total_rates)
-        print("Average rate:", avg_rate)
-        print("Highest rate:", highest_rate) 
-        print("Lowest rate:", lowest_rate)   
+        
         stats = {
             'total_cases': total_cases,
             'avg_rate': avg_rate,
