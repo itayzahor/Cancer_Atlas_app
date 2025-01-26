@@ -20,28 +20,36 @@ def heatmap():
     data = []
     stats = {}
     heatmap_html = None
+    conn, cursor = None, None
 
     # Fetch options for dropdowns
     cancer_types, races, years = [], [], []
     try:
         conn, cursor = get_db_connection()
         
+        cancer_types = [{'id': '-', 'name': 'All Cancer Types'}]
         cursor.execute(fetch_cancer_types_query())
-        cancer_types = cursor.fetchall()
+        cancer_types += cursor.fetchall()
 
+        races = [{'id': '-', 'name': 'All Races'}]
         cursor.execute(fetch_races_query())
-        races = cursor.fetchall()
+        races += cursor.fetchall()
 
         cursor.execute(fetch_years_query())
-        years = [row['year'] for row in cursor.fetchall()]
+        years = [{'year': '-', 'name': 'All Years'}] + [{'year': row['year'], 'name': row['year']} for row in cursor.fetchall()]
+
+
+
     except Exception as e:
         print(f"Error fetching dropdown options: {e}")
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
         races = [{'id': '-', 'name': 'Error fetching data'}]
         years = [{'year': '-', 'name': 'Error fetching data'}]
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:  
+            cursor.close()
+        if conn: 
+            conn.close()
 
     # Get user inputs from the query string
     cancer_type = request.args.get('cancer_type', "-")
@@ -102,14 +110,30 @@ def heatmap():
         data = cursor.fetchall()
     except Exception as e:
         print(f"Database query failed: {e}")
-        data = [{'error': 'Failed to fetch heatmap data. Please try again later.'}]
+        data = None
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:  
+            cursor.close()
+        if conn: 
+            conn.close()
 
     
-
-    if data:
+    if data is None:
+        # Handle database errors
+        stats = {}
+        heatmap_html = None
+        print("Error occurred during data fetching. Defaulting to empty visual.")
+    elif not data:
+        # Handle case where no data was returned
+        stats = {
+            'total_cases': 0,
+            'avg_rate': 0,
+            'highest_rate': {'state': '-', 'rate': 0},
+            'lowest_rate': {'state': '-', 'rate': 0}
+        }
+        heatmap_html = None
+        print("No data returned for the selected filters.")
+    else:
         # Calculate statistics
         total_cases = sum(row['total_count'] for row in data if row['total_count'])
         total_rates = sum(row['rate'] for row in data if row['rate'])
@@ -167,15 +191,6 @@ def heatmap():
 
         # Convert Plotly figure to HTML
         heatmap_html = fig.to_html(full_html=False)
-
-    else:
-        stats = {
-            'total_cases': 0,
-            'avg_rate': 0,
-            'highest_rate': {'state': 'N/A', 'rate': 'N/A'},
-            'lowest_rate': {'state': 'N/A', 'rate': 'N/A'}
-        }
-        heatmap_html = None
     
     
     # Store the data directly in the session

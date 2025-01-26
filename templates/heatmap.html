@@ -64,7 +64,6 @@
                     <div class="form-group">
                         <label for="cancer_type" class="form-label">Cancer Type</label>
                         <select id="cancer_type" name="cancer_type" class="form-select">
-                            <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
                             {% for site in cancer_types %}
                             <option value="{{ site['id'] }}" {% if site['id']|int == cancer_type|int %}selected{% endif %}>
                                 {{ site['name'] }}
@@ -77,9 +76,10 @@
                     <div class="form-group">
                         <label for="year" class="form-label">Year</label>
                         <select id="year" name="year" class="form-select">
-                            <option value="-" {% if year == "-" %}selected{% endif %}>All Years</option>
                             {% for y in years %}
-                            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                            <option value="{{ y['year'] }}" {% if y['year']|int == year|int %}selected{% endif %}>
+                                {{ y['name'] }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -111,7 +111,6 @@
                     <div class="form-group">
                         <label for="race_id" class="form-label">Race</label>
                         <select id="race_id" name="race_id" class="form-select">
-                            <option value="-" {% if race_id == "-" %}selected{% endif %}>All Races</option>
                             {% for race in races %}
                             <option value="{{ race['id'] }}" {% if race['id']|int == race_id|int %}selected{% endif %}>
                                 {{ race['name'] }}
@@ -219,9 +218,9 @@
 
     <!-- Heatmap Section -->
     <div class="visualization-container">
-        {% if not data %}
-            <div class="alert alert-info">
-                No data available for the selected filters. Please adjust your filters and try again.
+        {% if data is none %}
+            <div class="alert alert-danger">
+                An error occurred while fetching the heatmap data. Please try again later.
             </div>
         {% else %}
             <div id="heatmap">

@@ -15,7 +15,6 @@
                 <div class="col-md-6">
                     <label for="cancer_type" class="form-label">Cancer Type</label>
                     <select id="cancer_type" name="cancer_type" class="form-select">
-                        <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
                         {% for type in cancer_types %}
                             <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
                                 {{ type['name'] }}
@@ -38,10 +37,17 @@
     </div>
 
     <div class="visualization-container">
-        <div id="plot-wrapper">
-            {{ plot_html | safe }}
-        </div>
+        {% if data is none %}
+            <div class="alert alert-danger">
+                An error occurred while fetching the enivronmental impact analysis. Please try again later.
+            </div>
+        {% else %}
+            <div id="plot-wrapper">
+                {{ scatter_plot | safe }}
+            </div>
+        {% endif %}
     </div>
+
 
     <div class="analysis-section">
         <h2>Analysis Insights</h2>
@@ -83,11 +89,7 @@
     }
 
     .visualization-container {
-        background: white;
         padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 2rem 0;
     }
 
     .insight-card {
