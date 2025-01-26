@@ -17,6 +17,7 @@ heatmap_bp = Blueprint('heatmap', __name__, template_folder='../../templates', s
 def heatmap():
     show_advanced = request.args.get('show_advanced', 'false')
 
+    # Initialize variables
     data = []
     stats = {}
     heatmap_html = None
@@ -37,11 +38,9 @@ def heatmap():
 
         cursor.execute(fetch_years_query())
         years = [{'year': '-', 'name': 'All Years'}] + [{'year': row['year'], 'name': row['year']} for row in cursor.fetchall()]
-
-
-
     except Exception as e:
         print(f"Error fetching dropdown options: {e}")
+        # Set default values in case of error
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
         races = [{'id': '-', 'name': 'Error fetching data'}]
         years = [{'year': '-', 'name': 'Error fetching data'}]
@@ -51,12 +50,18 @@ def heatmap():
         if conn: 
             conn.close()
 
-    # Get user inputs from the query string
+     # Options for dropdowns
+    is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
+    is_alive_options = [{'value': '1', 'label': 'New Cancer Cases'}, {'value': '0', 'label': 'Cancer-Related Deaths'}]
+
+    # Get user inputs from the query string where - is the default value
     cancer_type = request.args.get('cancer_type', "-")
     year = request.args.get('year', "-")
     is_female = request.args.get('is_female', "-")
     is_alive = request.args.get('is_alive', "-")
     race_id = request.args.get('race_id', "-")
+
+    # get user input for advanced filters
     unemployement_min = request.args.get('unemployement_min')
     unemployement_max = request.args.get('unemployement_max')
     median_min = request.args.get('median_min')
@@ -71,6 +76,11 @@ def heatmap():
     aqi_max = request.args.get('aqi_max')
     co2_min = request.args.get('co2_min')
     co2_max = request.args.get('co2_max')
+
+    # Convert to integers if not "All" (`"-"`)
+    cancer_type = int(cancer_type) if cancer_type != "-" else "-"
+    race_id = int(race_id) if race_id != "-" else "-"
+    year = int(year) if year != "-" else "-"
 
     # Convert form inputs to proper data types
     unemployement_min = float(unemployement_min) if unemployement_min else None
@@ -88,11 +98,6 @@ def heatmap():
     co2_min = float(co2_min) if co2_min else None
     co2_max = float(co2_max) if co2_max else None
 
-
-    # Convert to integers if not "All" (`"-"`)
-    cancer_type = int(cancer_type) if cancer_type != "-" else "-"
-    race_id = int(race_id) if race_id != "-" else "-"
-    year = int(year) if year != "-" else "-"
 
     # Fetch data for the heatmap
     data = []
@@ -194,11 +199,7 @@ def heatmap():
     
     
     # Store the data directly in the session
-    session['heatmap_data'] = data
-
-    # Options for dropdowns
-    is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
-    is_alive_options = [{'value': '1', 'label': 'New Cancer Cases'}, {'value': '0', 'label': 'Cancer-Related Deaths'}]    
+    session['heatmap_data'] = data    
 
     # Render the template with data and dropdown options
     return render_template(

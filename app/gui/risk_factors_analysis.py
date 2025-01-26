@@ -11,6 +11,7 @@ risk_factors_analysis_bp = Blueprint('risk_factors_analysis', __name__, template
 @risk_factors_analysis_bp.route('/', methods=['GET', 'POST'])
 def risk_factors_analysis():
     conn, cursor = None, None
+
     # Fetch options for cancer type dropdown
     cancer_types = []
     try:
@@ -28,9 +29,10 @@ def risk_factors_analysis():
             conn.close()
 
 
-    # Get user inputs
+    # Get user inputs from the query string where - is the default value
     cancer_type = request.args.get('cancer_type', "-")
-    factor = request.args.get('factor', "cigarette_use_rate")  # Default to cigarette use rate
+    # Default to cigarette use rate
+    factor = request.args.get('factor', "cigarette_use_rate")  
 
     # Fetch data for the selected cancer type and factor
     data = []
@@ -48,6 +50,7 @@ def risk_factors_analysis():
         if conn: 
             conn.close()
 
+    # check if the data was fetched successfully
     if data is None:
         scatter_plot = None
     else:
@@ -75,7 +78,7 @@ def risk_factors_analysis():
         )
         scatter_plot = scatter_plot.to_html(full_html=False)
 
-    # Store the data directly in the session
+    # Store the data directly in the session for the download button
     session['risk_factors_data'] = data 
 
     # Render template

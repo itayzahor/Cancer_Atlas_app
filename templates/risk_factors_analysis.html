@@ -73,6 +73,10 @@
             </div>
         </div>
     </div>
+    <!-- Download Button -->
+    <a href="{{ url_for('utilities.download_csv', data_key='risk_factors_data') }}" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Data
+    </a>
 </div>
 {% endblock %}
 
