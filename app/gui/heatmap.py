@@ -1,9 +1,8 @@
 from flask import Blueprint, render_template, request, session
-from ..db.db_connector import get_db_connection
-from ..db.queries import *
 import os
 import plotly.graph_objects as go
 import pandas as pd
+from ..db.db_operations import *
 
 # Define absolute paths for templates and static folders
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,43 +22,27 @@ def heatmap():
     heatmap_html = None
     conn, cursor = None, None
 
-    # Fetch options for dropdowns
-    cancer_types, races, years = [], [], []
-    try:
-        conn, cursor = get_db_connection()
-        
-        cancer_types = [{'id': '-', 'name': 'All Cancer Types'}]
-        cursor.execute(fetch_cancer_types_query())
-        cancer_types += cursor.fetchall()
+    # Fetch options for dropdowns from the database
+    cancer_types = get_cancer_types()
+    races = get_races()
+    years = get_years()
 
-        races = [{'id': '-', 'name': 'All Races'}]
-        cursor.execute(fetch_races_query())
-        races += cursor.fetchall()
-
-        cursor.execute(fetch_years_query())
-        years = [{'year': '-', 'name': 'All Years'}] + [{'year': row['year'], 'name': row['year']} for row in cursor.fetchall()]
-    except Exception as e:
-        print(f"Error fetching dropdown options: {e}")
-        # Set default values in case of error
+    # Handle query failures
+    if cancer_types is None:
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+    if races is None:
         races = [{'id': '-', 'name': 'Error fetching data'}]
+    if years is None:
         years = [{'year': '-', 'name': 'Error fetching data'}]
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
-
-     # Options for dropdowns
-    is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
-    is_alive_options = [{'value': '1', 'label': 'New Cancer Cases'}, {'value': '0', 'label': 'Cancer-Related Deaths'}]
 
     # Get user inputs from the query string where - is the default value
     cancer_type = request.args.get('cancer_type', "-")
     year = request.args.get('year', "-")
+    race_id = request.args.get('race_id', "-")
+
+    # get user input for the binary filters
     is_female = request.args.get('is_female', "-")
     is_alive = request.args.get('is_alive', "-")
-    race_id = request.args.get('race_id', "-")
 
     # get user input for advanced filters
     unemployement_min = request.args.get('unemployement_min')
@@ -100,27 +83,12 @@ def heatmap():
 
 
     # Fetch data for the heatmap
-    data = []
-    try:
-        conn, cursor = get_db_connection()
-        # Construct the query dynamically
-        query = construct_heatmap_query(
-            cancer_type, year, is_female, is_alive, race_id,
-            unemployement_min, unemployement_max, median_min, median_max,
-            insurance_min, insurance_max, inactivity_min, inactivity_max,
-            cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max
-        )
-        # Execute the query
-        cursor.execute(query)
-        data = cursor.fetchall()
-    except Exception as e:
-        print(f"Database query failed: {e}")
-        data = None
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
+    data = fetch_heatmap_data(
+        cancer_type, year, is_female, is_alive, race_id,
+        unemployement_min, unemployement_max, median_min, median_max,
+        insurance_min, insurance_max, inactivity_min, inactivity_max,
+        cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max
+    )
 
     
     if data is None:
@@ -213,8 +181,6 @@ def heatmap():
         is_alive=is_alive,
         race_id=race_id,
         races=races,
-        is_female_options=is_female_options,
-        is_alive_options=is_alive_options,
         unemployement_min=unemployement_min,
         unemployement_max=unemployement_max,
         median_min=median_min,
