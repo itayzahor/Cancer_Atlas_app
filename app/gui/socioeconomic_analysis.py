@@ -27,9 +27,10 @@ def socioeconomic_analysis():
         if conn: 
             conn.close()
 
-    # Get user inputs
+    # Get user inputs from the query string where - is the default value
     cancer_type = request.args.get('cancer_type', "-")
-    factor = request.args.get('factor', "median_income")  # Default to median_income
+    # Default to median_income
+    factor = request.args.get('factor', "median_income") 
 
    # Fetch data for the selected cancer type and factor
     data = []
@@ -47,6 +48,7 @@ def socioeconomic_analysis():
         if conn: 
             conn.close()
     
+    # check if the data was fetched successfully
     if data is None:
         scatter_plot = None
     else:
@@ -72,7 +74,7 @@ def socioeconomic_analysis():
         )
         scatter_plot = scatter_plot.to_html(full_html=False)
 
-    # Store the data directly in the session
+    # Store the data directly in the session for the download button
     session['socioeconomic_data'] = data
 
     # Render the Insights page with the chart and data

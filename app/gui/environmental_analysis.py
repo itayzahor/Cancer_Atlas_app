@@ -31,7 +31,8 @@ def environmental_analysis():
 
     # Get user inputs
     cancer_type = request.args.get('cancer_type', "-")
-    factor = request.args.get('factor', "air_quality_index")  # Default to air quality index
+    # Default to air quality index
+    factor = request.args.get('factor', "air_quality_index")  
 
     # Fetch data for the selected cancer type and factor
     data = []
@@ -48,6 +49,8 @@ def environmental_analysis():
             cursor.close()
         if conn: 
             conn.close()
+
+    # check if the data was fetched successfully
     if data is None:
         scatter_plot = None
     else:
@@ -75,7 +78,7 @@ def environmental_analysis():
         )
         scatter_plot = scatter_plot.to_html(full_html=False)
 
-    # Store the data directly in the session
+    # Store the data directly in the session for the download button
     session['environmental_data'] = data
 
     # Render template

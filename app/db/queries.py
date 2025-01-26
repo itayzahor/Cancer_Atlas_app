@@ -4,7 +4,8 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
                             inactivity_min, inactivity_max, cigarette_min,
                             cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
     """
-    Constructs the heatmap SQL query dynamically with the given filters.
+    this function constructs a SQL query to fetch data for the heatmap based on the provided filters. Afterwards it calculates the filtered population and rate according to the filter. Finally, it normalizes the rate for easier comparison in the heatmap. All in all, this function returns a query that calculates all the data needed for the heatmap in the the db itself, instead of doing the calculations in the app.
+
 
     Args:
         cancer_type: Filter for cancer type.
@@ -126,6 +127,8 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
             e.co2_emissions
         )
         """
+    
+    # Add final data as a CTE to calculate the filtered population and rate
     query += """
         , final_data AS (
             SELECT 
@@ -170,7 +173,7 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
         )
     """
 
-    # Add the normalized rates
+    # Add the final query to fetch the data and normalize the rate
     query += """
         SELECT 
             final_data.*,
@@ -187,14 +190,14 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
 
 def fetch_cancer_types_query():
     """
-    Returns the SQL query to fetch cancer types.
+    Returns the SQL query to fetch all the different cancer types.
     """
     return "SELECT id, name FROM cancer_types ORDER BY name;"
 
 
 def fetch_races_query():
     """
-    Returns the SQL query to fetch races.
+    Returns the SQL query to fetch all the different races.
     """
     return "SELECT id, name FROM races ORDER BY name;"
 
