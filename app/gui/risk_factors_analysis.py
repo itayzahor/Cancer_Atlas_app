@@ -1,32 +1,17 @@
 from flask import Blueprint, render_template, request, session
-from ..db.db_connector import get_db_connection
-from ..db.insights_queries import *
-from ..db.queries import *
 import pandas as pd
 import plotly.graph_objects as go
+from ..db.db_operations import *
 
 # Define the Blueprint
 risk_factors_analysis_bp = Blueprint('risk_factors_analysis', __name__, template_folder='../../templates')
 
 @risk_factors_analysis_bp.route('/', methods=['GET', 'POST'])
 def risk_factors_analysis():
-    conn, cursor = None, None
-
     # Fetch options for cancer type dropdown
-    cancer_types = []
-    try:
-        conn, cursor = get_db_connection()
-        cancer_types = [{'id': '-', 'name': 'All Cancer Types'}]
-        cursor.execute(fetch_cancer_types_query())
-        cancer_types += cursor.fetchall()
-    except Exception as e:
-        print(f"Error fetching dropdown options: {e}")
+    cancer_types = get_cancer_types()
+    if cancer_types is None:
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
 
 
     # Get user inputs from the query string where - is the default value
@@ -34,21 +19,8 @@ def risk_factors_analysis():
     # Default to cigarette use rate
     factor = request.args.get('factor', "cigarette_use_rate")  
 
-    # Fetch data for the selected cancer type and factor
-    data = []
-    try:
-        conn, cursor = get_db_connection()
-        query = risk_factors_vs_incidence(cancer_type, factor)
-        cursor.execute(query)
-        data = cursor.fetchall()
-    except Exception as e:
-        print(f"Database query failed: {e}")
-        data = None
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
+    # Fetch data for the selected cancer type and risk factor
+    data = fetch_risk_factors_vs_incidence(cancer_type, factor)
 
     # check if the data was fetched successfully
     if data is None:

@@ -1,9 +1,7 @@
 from flask import Blueprint, render_template, request, session
-from ..db.db_connector import get_db_connection
-from ..db.queries import *  
-from ..db.insights_queries import *
 import pandas as pd
 import plotly.graph_objects as go
+from ..db.db_operations import *
 
 # Define the Blueprint
 environmental_analysis_bp = Blueprint('environmental_analysis', __name__, template_folder='../../templates')
@@ -11,21 +9,11 @@ environmental_analysis_bp = Blueprint('environmental_analysis', __name__, templa
 @environmental_analysis_bp.route('/', methods=['GET', 'POST'])
 def environmental_analysis():
     conn, cursor = None, None
+
     # Fetch options for cancer type dropdown
-    cancer_types = []
-    try:
-        conn, cursor = get_db_connection()
-        cancer_types = [{'id': '-', 'name': 'All Cancer Types'}]
-        cursor.execute(fetch_cancer_types_query())
-        cancer_types += cursor.fetchall()
-    except Exception as e:
-        print(f"Error fetching dropdown options: {e}")
+    cancer_types = get_cancer_types()
+    if cancer_types is None:
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
 
 
 
@@ -35,20 +23,7 @@ def environmental_analysis():
     factor = request.args.get('factor', "air_quality_index")  
 
     # Fetch data for the selected cancer type and factor
-    data = []
-    try:
-        conn, cursor = get_db_connection()
-        query = environmental_vs_incidence(cancer_type, factor)
-        cursor.execute(query)
-        data = cursor.fetchall()
-    except Exception as e:
-        print(f"Database query failed: {e}")
-        data = None
-    finally:
-        if cursor:  
-            cursor.close()
-        if conn: 
-            conn.close()
+    data = fetch_environmental_vs_incidence(cancer_type, factor)
 
     # check if the data was fetched successfully
     if data is None:
