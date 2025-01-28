@@ -4,7 +4,8 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
                             inactivity_min, inactivity_max, cigarette_min,
                             cigarette_max, aqi_min, aqi_max, co2_min, co2_max):
     """
-    Constructs the heatmap SQL query dynamically with the given filters.
+    this function constructs a SQL query to fetch data for the heatmap based on the provided filters. Afterwards it calculates the filtered population and rate according to the filter. Finally, it normalizes the rate for easier comparison in the heatmap. All in all, this function returns a query that calculates all the data needed for the heatmap in the the db itself, instead of doing the calculations in the app.
+
 
     Args:
         cancer_type: Filter for cancer type.
@@ -26,6 +27,30 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
              - Calculated cancer rates
              - Normalized rates for easier comparison
     """
+
+    # Add filtered population logic dynamically
+    if race_id == 1:
+        race_population = "d.native_pacific_population"
+    elif race_id == 2:
+        race_population = "d.black_population"
+    elif race_id == 3:
+        race_population = "d.hispanic_population"
+    elif race_id == 4:
+        race_population = "d.asian_population"
+    elif race_id == 5:
+        race_population = "d.white_population"
+    else:
+        race_population = "d.total_population"
+
+    # Add gender-specific adjustments dynamically
+    if is_female == "1":
+        filtered_population = f"{race_population} * (d.female_population / NULLIF(d.total_population, 0))"
+    elif is_female == "0":
+        filtered_population = f"{race_population} * (d.male_population / NULLIF(d.total_population, 0))"
+    else:
+        filtered_population = race_population
+
+    
     query = f"""
         WITH base_data AS (
             SELECT 
@@ -34,18 +59,7 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
                 s.latitude,
                 s.longitude,
                 COALESCE(SUM(c.count), 0) AS total_count,
-                d.total_population,
-                d.male_population,
-                d.female_population,
-                d.white_population,
-                d.black_population,
-                d.asian_population,
-                d.hispanic_population,
-                d.native_pacific_population,
-                sd.unemployment_rate,
-                sd.median_income,
-                e.air_quality_index,
-                e.co2_emissions
+                {filtered_population} AS filtered_population
             FROM states s
             LEFT JOIN cancer_data c ON s.id = c.state_id
     """
@@ -111,90 +125,57 @@ def construct_heatmap_query(cancer_type, year, is_female, is_alive, race_id,
 
     query += """
         GROUP BY 
-            s.id,
-            d.total_population,
-            d.male_population,
-            d.female_population,
-            d.white_population,
-            d.black_population,
-            d.asian_population,
-            d.hispanic_population,
-            d.native_pacific_population,
-            sd.unemployment_rate,
-            sd.median_income,
-            e.air_quality_index,
-            e.co2_emissions
-        )
+            s.id
+        ),
         """
-    query += """
-        , final_data AS (
-            SELECT 
-                base_data.*,
-    """
 
-    # Add filtered population logic dynamically
-    if race_id == 1:
-        race_population = "base_data.native_pacific_population"
-    elif race_id == 2:
-        race_population = "base_data.black_population"
-    elif race_id == 3:
-        race_population = "base_data.hispanic_population"
-    elif race_id == 4:
-        race_population = "base_data.asian_population"
-    elif race_id == 5:
-        race_population = "base_data.white_population"
-    else:
-        race_population = "base_data.total_population"
-
-    # Add gender-specific adjustments dynamically
-    if is_female == "1":
-        filtered_population = f"{race_population} * (base_data.female_population / NULLIF(base_data.total_population, 0))"
-    elif is_female == "0":
-        filtered_population = f"{race_population} * (base_data.male_population / NULLIF(base_data.total_population, 0))"
-    else:
-        filtered_population = race_population
-
-    # Add filtered_population and rate calculations to the query
+    # Add rate calculation logic 
     # When calculating the rate, we check for division by zero to avoid errors
     # We also round the rate to 2 decimal places
-    query += f"""
-        {filtered_population} AS filtered_population,
-        ROUND(
-            CASE 
-                WHEN total_count > 0 AND {filtered_population} > 0 THEN 
-                    (total_count / {filtered_population}) * 100
-                ELSE 0
-            END, 2
-        ) AS rate
+    query += """
+        rate_data AS (
+        SELECT
+            base_data.*,
+            -- Calculate rate using precomputed filtered_population
+            ROUND(
+                CASE
+                    WHEN total_count > 0 AND filtered_population > 0 THEN
+                        (total_count / filtered_population) * 100
+                    ELSE 0
+                END, 2
+            ) AS rate
         FROM base_data
-        )
+    ),
     """
 
-    # Add the normalized rates
+    # Add the final query to fetch the data and normalize the rate
     query += """
-        SELECT 
-            final_data.*,
-            CASE 
-                WHEN rate_bounds.max_rate > rate_bounds.min_rate THEN 
-                    (final_data.rate - rate_bounds.min_rate) / (rate_bounds.max_rate - rate_bounds.min_rate)
-                ELSE 0
-            END AS normalized_rate
-        FROM final_data,
-            (SELECT MIN(rate) AS min_rate, MAX(rate) AS max_rate FROM final_data) AS rate_bounds;
+        final_data AS (
+            SELECT 
+                rate_data.*,
+                CASE 
+                    WHEN rate_bounds.max_rate > rate_bounds.min_rate THEN 
+                        (rate_data.rate - rate_bounds.min_rate) / (rate_bounds.max_rate - rate_bounds.min_rate)
+                    ELSE 0
+                END AS normalized_rate
+            FROM rate_data,
+                (SELECT MIN(rate) AS min_rate, MAX(rate) AS max_rate FROM rate_data) AS rate_bounds
+        )
+        SELECT * FROM final_data;
     """
     return query
 
 
 def fetch_cancer_types_query():
     """
-    Returns the SQL query to fetch cancer types.
+    Returns the SQL query to fetch all the different cancer types.
     """
     return "SELECT id, name FROM cancer_types ORDER BY name;"
 
 
 def fetch_races_query():
     """
-    Returns the SQL query to fetch races.
+    Returns the SQL query to fetch all the different races.
     """
     return "SELECT id, name FROM races ORDER BY name;"
 

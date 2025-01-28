@@ -15,7 +15,6 @@
                 <div class="col-md-6">
                     <label for="cancer_type" class="form-label">Cancer Type</label>
                     <select id="cancer_type" name="cancer_type" class="form-select">
-                        <option value="-" {% if cancer_type == "-" %}selected{% endif %}>All Cancer Types</option>
                         {% for type in cancer_types %}
                             <option value="{{ type['id'] }}" {% if type['id']|int == cancer_type|int %}selected{% endif %}>
                                 {{ type['name'] }}
@@ -37,13 +36,18 @@
             </div>
         </form>
     </div>
-
-
     <div class="visualization-container">
-        <div id="plot-wrapper">
-            {{ scatter_plot | safe }}
-        </div>
+        {% if data is none %}
+            <div class="alert alert-danger">
+                An error occurred while fetching the socioeconomic impact analysis. Please try again later.
+            </div>
+        {% else %}
+            <div id="plot-wrapper">
+                {{ scatter_plot | safe }}
+            </div>
+        {% endif %}
     </div>
+
 
     <div class="analysis-section">
         <h2>Analysis Insights</h2>
@@ -80,6 +84,10 @@
             </div>
         </div>
     </div>
+    <!-- Download Button -->
+    <a href="{{ url_for('utilities.download_csv', data_key='socioeconomic_data') }}" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Data
+    </a>
 </div>
 {% endblock %}
 
@@ -100,6 +108,9 @@
     #plot-wrapper {
         width: 100%;
         overflow-x: auto;
+    }
+    .visualization-container {
+        padding: 2rem;
     }
 </style>
 {% endblock %}

@@ -1,19 +1,65 @@
 {% if stats %}
-<div style="border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
-    <h3>Statistics</h3>
-    <ul>
-        <li><strong>Total Cancer Cases:</strong> {{ stats.total_cases }}</li>
-        <li><strong>Average Rate (%):</strong> {{ stats.avg_rate }}</li>
-        <li>
-            <strong>State with Highest Rate:</strong> 
-            {{ stats.highest_rate.state }} - {{ stats.highest_rate.rate }}%
-        </li>
-        <li>
-            <strong>State with Lowest Rate:</strong> 
-            {{ stats.lowest_rate.state }} - {{ stats.lowest_rate.rate }}%
-        </li>
-    </ul>
+<div class="statistics-section">
+    <div class="row-statistics">
+        <div class="col-md-3">
+            <div class="statistic-card">
+                <h3>US Cancer Cases</h3>
+                <p>{{ stats.total_cases }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="statistic-card">
+                <h3>US Average Rate</h3>
+                <p>{{ stats.avg_rate }}%</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="statistic-card">
+                <h3>Highest Rate</h3>
+                <p>{{ stats.highest_rate.state }}: {{ stats.highest_rate.rate }}%</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="statistic-card">
+                <h3>Lowest Rate</h3>
+                <p>{{ stats.lowest_rate.state }}: {{ stats.lowest_rate.rate }}%</p>
+            </div>
+        </div>
+    </div>
 </div>
-{% else %}
-<p>No statistics available.</p>
 {% endif %}
+
+{% block extra_css %}
+<style>
+    .statistic-card {
+        background: #ffffff; 
+        padding: 1.5rem;
+        border-radius: 8px;
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
+
+    .statistic-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .statistics-section {
+        margin-bottom: 20px; 
+    }
+
+    .row-statistics {
+        display: flex;
+        gap: 10px; /* Ensure consistent spacing between the cards */
+    }
+
+    .statistic-card p {
+        font-size: 1.25rem; 
+        margin: 0;
+    }
+
+    #plot-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}

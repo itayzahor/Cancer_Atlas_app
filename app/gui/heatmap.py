@@ -1,9 +1,8 @@
 from flask import Blueprint, render_template, request, session
-from ..db.db_connector import get_db_connection
-from ..db.queries import *
 import os
 import plotly.graph_objects as go
 import pandas as pd
+from ..db.db_operations import *
 
 # Define absolute paths for templates and static folders
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,38 +16,35 @@ heatmap_bp = Blueprint('heatmap', __name__, template_folder='../../templates', s
 def heatmap():
     show_advanced = request.args.get('show_advanced', 'false')
 
+    # Initialize variables
     data = []
     stats = {}
     heatmap_html = None
+    conn, cursor = None, None
 
-    # Fetch options for dropdowns
-    cancer_types, races, years = [], [], []
-    try:
-        conn, cursor = get_db_connection()
-        
-        cursor.execute(fetch_cancer_types_query())
-        cancer_types = cursor.fetchall()
+    # Fetch options for dropdowns from the database
+    cancer_types = get_cancer_types()
+    races = get_races()
+    years = get_years()
 
-        cursor.execute(fetch_races_query())
-        races = cursor.fetchall()
-
-        cursor.execute(fetch_years_query())
-        years = [row['year'] for row in cursor.fetchall()]
-    except Exception as e:
-        print(f"Error fetching dropdown options: {e}")
+    # Handle query failures
+    if cancer_types is None:
         cancer_types = [{'id': '-', 'name': 'Error fetching data'}]
+    if races is None:
         races = [{'id': '-', 'name': 'Error fetching data'}]
+    if years is None:
         years = [{'year': '-', 'name': 'Error fetching data'}]
-    finally:
-        cursor.close()
-        conn.close()
 
-    # Get user inputs from the query string
+    # Get user inputs from the query string where - is the default value
     cancer_type = request.args.get('cancer_type', "-")
     year = request.args.get('year', "-")
+    race_id = request.args.get('race_id', "-")
+
+    # get user input for the binary filters
     is_female = request.args.get('is_female', "-")
     is_alive = request.args.get('is_alive', "-")
-    race_id = request.args.get('race_id', "-")
+
+    # get user input for advanced filters
     unemployement_min = request.args.get('unemployement_min')
     unemployement_max = request.args.get('unemployement_max')
     median_min = request.args.get('median_min')
@@ -63,6 +59,11 @@ def heatmap():
     aqi_max = request.args.get('aqi_max')
     co2_min = request.args.get('co2_min')
     co2_max = request.args.get('co2_max')
+
+    # Convert to integers if not "All" (`"-"`)
+    cancer_type = int(cancer_type) if cancer_type != "-" else "-"
+    race_id = int(race_id) if race_id != "-" else "-"
+    year = int(year) if year != "-" else "-"
 
     # Convert form inputs to proper data types
     unemployement_min = float(unemployement_min) if unemployement_min else None
@@ -81,35 +82,31 @@ def heatmap():
     co2_max = float(co2_max) if co2_max else None
 
 
-    # Convert to integers if not "All" (`"-"`)
-    cancer_type = int(cancer_type) if cancer_type != "-" else "-"
-    race_id = int(race_id) if race_id != "-" else "-"
-    year = int(year) if year != "-" else "-"
-
     # Fetch data for the heatmap
-    data = []
-    try:
-        conn, cursor = get_db_connection()
-        # Construct the query dynamically
-        query = construct_heatmap_query(
-            cancer_type, year, is_female, is_alive, race_id,
-            unemployement_min, unemployement_max, median_min, median_max,
-            insurance_min, insurance_max, inactivity_min, inactivity_max,
-            cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max
-        )
-        # Execute the query
-        cursor.execute(query)
-        data = cursor.fetchall()
-    except Exception as e:
-        print(f"Database query failed: {e}")
-        data = [{'error': 'Failed to fetch heatmap data. Please try again later.'}]
-    finally:
-        cursor.close()
-        conn.close()
+    data = fetch_heatmap_data(
+        cancer_type, year, is_female, is_alive, race_id,
+        unemployement_min, unemployement_max, median_min, median_max,
+        insurance_min, insurance_max, inactivity_min, inactivity_max,
+        cigarette_min, cigarette_max, aqi_min, aqi_max, co2_min, co2_max
+    )
 
     
-
-    if data:
+    if data is None:
+        # Handle database errors
+        stats = {}
+        heatmap_html = None
+        print("Error occurred during data fetching. Defaulting to empty visual.")
+    elif not data:
+        # Handle case where no data was returned
+        stats = {
+            'total_cases': 0,
+            'avg_rate': 0,
+            'highest_rate': {'state': '-', 'rate': 0},
+            'lowest_rate': {'state': '-', 'rate': 0}
+        }
+        heatmap_html = None
+        print("No data returned for the selected filters.")
+    else:
         # Calculate statistics
         total_cases = sum(row['total_count'] for row in data if row['total_count'])
         total_rates = sum(row['rate'] for row in data if row['rate'])
@@ -117,11 +114,7 @@ def heatmap():
 
         highest_rate = max(data, key=lambda row: row['rate'])
         lowest_rate = min(data, key=lambda row: row['rate'])
-        print("Total cases:", total_cases)
-        print("Total rates:", total_rates)
-        print("Average rate:", avg_rate)
-        print("Highest rate:", highest_rate) 
-        print("Lowest rate:", lowest_rate)   
+        
         stats = {
             'total_cases': total_cases,
             'avg_rate': avg_rate,
@@ -171,23 +164,10 @@ def heatmap():
 
         # Convert Plotly figure to HTML
         heatmap_html = fig.to_html(full_html=False)
-
-    else:
-        stats = {
-            'total_cases': 0,
-            'avg_rate': 0,
-            'highest_rate': {'state': 'N/A', 'rate': 'N/A'},
-            'lowest_rate': {'state': 'N/A', 'rate': 'N/A'}
-        }
-        heatmap_html = None
     
     
     # Store the data directly in the session
-    session['heatmap_data'] = data
-
-    # Options for dropdowns
-    is_female_options = [{'value': '1', 'label': 'Female'}, {'value': '0', 'label': 'Male'}]
-    is_alive_options = [{'value': '1', 'label': 'New Cancer Cases'}, {'value': '0', 'label': 'Cancer-Related Deaths'}]    
+    session['heatmap_data'] = data    
 
     # Render the template with data and dropdown options
     return render_template(
@@ -201,8 +181,6 @@ def heatmap():
         is_alive=is_alive,
         race_id=race_id,
         races=races,
-        is_female_options=is_female_options,
-        is_alive_options=is_alive_options,
         unemployement_min=unemployement_min,
         unemployement_max=unemployement_max,
         median_min=median_min,
