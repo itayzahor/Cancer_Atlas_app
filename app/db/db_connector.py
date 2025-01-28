@@ -1,5 +1,8 @@
 import mysql.connector
 
+# link to the website
+# http://127.0.0.1:5000/cancer_atlas
+
 def get_db_connection():
     # Establishing the connection
     conn = mysql.connector.connect(
