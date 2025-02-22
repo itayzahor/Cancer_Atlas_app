@@ -1,7 +1,19 @@
-# Cancer_Atlas_app
+# Cancer Atlas
+*A data-driven research tool exploring cancer rates, socioeconomic inequality, and environmental factors across U.S. states.*
 
-python libraries to install in the python_libraries_installs.txt file
+![Cancer Atlas Banner](https://your-image-url.com/banner.png)
 
-to run
-python run.py  
+## 🌟 About the Project  
+Cancer Atlas is an interactive platform designed to visualize and analyze the relationship between **socioeconomic data, environmental factors, and cancer rates**. The goal is to help **researchers and policymakers** make data-driven decisions.
+
+## 🔍 Key Features  
+✅ **Visual Heatmaps** – Interactive maps displaying cancer rates by state  
+✅ **Data Insights** – Explore correlations, such as **income vs. mortality rates**  
+✅ **Custom Filters** – Adjust queries by **cancer type, race, gender, and more**  
+✅ **Comprehensive Data** – Pulling from trusted sources like **CDC, Census Bureau, and EPA**  
+
+![Heatmap Preview](https://your-image-url.com/heatmap.png)
+
+
+
 
