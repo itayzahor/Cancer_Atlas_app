@@ -1,7 +1,9 @@
 # Cancer Atlas
 *A data-driven research tool exploring cancer rates, socioeconomic inequality, and environmental factors across U.S. states.*
 
-[🎥 Watch the Demo](/cancer_atlas_video.mp4)
+🎥 **Want to see it in action?** Download and watch the demo video at:  
+
+`cancer atlas video.mp4`
 
 ## 🌟 Project Overview  
 The goal of this project is to analyze the **relationships between socioeconomic status, environmental quality, risk factors, and cancer rates** across U.S. states.  
