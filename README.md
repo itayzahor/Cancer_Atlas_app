@@ -1,7 +1,8 @@
 # Cancer Atlas
 *A data-driven research tool exploring cancer rates, socioeconomic inequality, and environmental factors across U.S. states.*
 
-![Cancer Atlas Banner](https://your-image-url.com/banner.png)
+[🎥 Watch the Demo](cancer_atlas_video.mp4)
+
 
 ## 🌟 About the Project  
 Cancer Atlas is an interactive platform designed to visualize and analyze the relationship between **socioeconomic data, environmental factors, and cancer rates**. The goal is to help **researchers and policymakers** make data-driven decisions.
